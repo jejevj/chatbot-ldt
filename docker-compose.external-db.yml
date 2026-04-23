@@ -1,0 +1,51 @@
+version: '3.8'
+
+# Docker Compose untuk menggunakan PostgreSQL eksternal yang sudah ada
+# Gunakan file ini jika Anda sudah punya PostgreSQL yang berjalan
+
+services:
+  # Backend API
+  api:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    container_name: chatbot-api
+    environment:
+      # Ganti dengan connection string PostgreSQL Anda
+      DATABASE_URL: ${DATABASE_URL:-postgresql://postgres:qwert12345!@host.docker.internal:5433/satu_data_db}
+      QWEN_API_URL: ${QWEN_API_URL:-http://host.docker.internal:9002/v1/chat/completions}
+      QWEN_MODEL: Qwen/Qwen2.5-7B-Instruct-AWQ
+      API_HOST: 0.0.0.0
+      API_PORT: 8765
+      CORS_ORIGINS: '["http://localhost:8766", "http://localhost:3210"]'
+      LOG_LEVEL: INFO
+      MAINTENANCE_MODE: ${MAINTENANCE_MODE:-false}
+    ports:
+      - "8765:8765"
+    volumes:
+      - ./api/logs:/app/logs
+    networks:
+      - chatbot-network
+    restart: unless-stopped
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  # Frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_BASE_URL: http://localhost:8765/chatbot-api
+    container_name: chatbot-frontend
+    ports:
+      - "8766:8766"
+    depends_on:
+      - api
+    networks:
+      - chatbot-network
+    restart: unless-stopped
+
+networks:
+  chatbot-network:
+    driver: bridge

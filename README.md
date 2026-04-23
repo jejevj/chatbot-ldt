@@ -166,11 +166,33 @@ Interactive API documentation available at:
 
 - **Frontend**: 8766
 - **Backend API**: 8765
-- **PostgreSQL**: 5433
+- **PostgreSQL**: 5433 (jika menggunakan Docker PostgreSQL)
+
+### Option 1: Dengan PostgreSQL di Docker (Default)
+
+```bash
+# Start semua services termasuk PostgreSQL
+docker-compose up -d
+```
+
+### Option 2: Dengan PostgreSQL Eksternal (Sudah Ada)
+
+Jika Anda sudah punya PostgreSQL yang berjalan:
+
+```bash
+# Setup environment
+cp .env.external-db .env
+# Edit .env dan sesuaikan DATABASE_URL
+
+# Start tanpa PostgreSQL
+docker-compose -f docker-compose.external-db.yml up -d
+```
+
+📖 **Panduan lengkap**: [EXTERNAL_DATABASE.md](EXTERNAL_DATABASE.md)
 
 ### Services
 
-1. **postgres** - PostgreSQL with pgvector
+1. **postgres** - PostgreSQL with pgvector (opsional, jika tidak pakai eksternal)
 2. **api** - FastAPI backend
 3. **frontend** - Vue.js + Nginx
 
