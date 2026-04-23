@@ -1,7 +1,8 @@
 version: '3.8'
 
 services:
-  # PostgreSQL Database
+  # PostgreSQL Database (Optional - disable jika sudah punya PostgreSQL eksternal)
+  # Untuk disable: set USE_DOCKER_POSTGRES=false di .env
   postgres:
     image: pgvector/pgvector:pg16
     container_name: chatbot-postgres
@@ -23,6 +24,8 @@ services:
     networks:
       - chatbot-network
     restart: unless-stopped
+    profiles:
+      - with-postgres  # Service ini hanya jalan jika profile 'with-postgres' aktif
 
   # Backend API
   api:
@@ -31,7 +34,8 @@ services:
       dockerfile: Dockerfile
     container_name: chatbot-api
     environment:
-      DATABASE_URL: postgresql://postgres:qwert12345!@postgres:5432/satu_data_db
+      # Gunakan DATABASE_URL dari .env, atau default ke postgres container
+      DATABASE_URL: ${DATABASE_URL:-postgresql://postgres:qwert12345!@postgres:5432/satu_data_db}
       QWEN_API_URL: ${QWEN_API_URL:-http://host.docker.internal:9002/v1/chat/completions}
       QWEN_MODEL: Qwen/Qwen2.5-7B-Instruct-AWQ
       API_HOST: 0.0.0.0
@@ -44,6 +48,7 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+        required: false  # Tidak wajib, bisa jalan tanpa postgres container
     volumes:
       - ./api/logs:/app/logs
     networks:

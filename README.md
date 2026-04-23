@@ -168,54 +168,49 @@ Interactive API documentation available at:
 - **Backend API**: 8765
 - **PostgreSQL**: 5433 (jika menggunakan Docker PostgreSQL)
 
-### Option 1: Dengan PostgreSQL di Docker (Default)
+### Quick Start
 
+**Option 1: Dengan PostgreSQL di Docker**
 ```bash
-# Start semua services termasuk PostgreSQL
+cp .env.docker .env
+docker-compose --profile with-postgres up -d
+```
+
+**Option 2: Dengan PostgreSQL Eksternal (Sudah Ada)**
+```bash
+cp .env.docker .env
+# Edit .env dan set DATABASE_URL ke PostgreSQL Anda
 docker-compose up -d
 ```
 
-### Option 2: Dengan PostgreSQL Eksternal (Sudah Ada)
+### Akses Aplikasi
 
-Jika Anda sudah punya PostgreSQL yang berjalan:
-
-```bash
-# Setup environment
-cp .env.external-db .env
-# Edit .env dan sesuaikan DATABASE_URL
-
-# Start tanpa PostgreSQL
-docker-compose -f docker-compose.external-db.yml up -d
-```
-
-📖 **Panduan lengkap**: [EXTERNAL_DATABASE.md](EXTERNAL_DATABASE.md)
-
-### Services
-
-1. **postgres** - PostgreSQL with pgvector (opsional, jika tidak pakai eksternal)
-2. **api** - FastAPI backend
-3. **frontend** - Vue.js + Nginx
+- Frontend: http://localhost:8766/chatbot/
+- API Docs: http://localhost:8765/chatbot-api/docs
 
 ### Commands
 
 ```bash
-# Start services
+# Start (tanpa PostgreSQL)
 docker-compose up -d
+
+# Start (dengan PostgreSQL)
+docker-compose --profile with-postgres up -d
 
 # View logs
 docker-compose logs -f
 
-# Stop services
+# Stop
 docker-compose down
 
 # Rebuild
 docker-compose up -d --build
-
-# Check status
-docker-compose ps
 ```
 
-See [DOCKER_DEPLOYMENT.md](DOCKER_DEPLOYMENT.md) for complete guide.
+📖 **Dokumentasi lengkap**:
+- [DOCKER_USAGE.md](DOCKER_USAGE.md) - Panduan penggunaan Docker
+- [DOCKER_DEPLOYMENT.md](DOCKER_DEPLOYMENT.md) - Deployment production
+- [EXTERNAL_DATABASE.md](EXTERNAL_DATABASE.md) - Setup database eksternal
 
 ## 🔧 Maintenance Mode
 
