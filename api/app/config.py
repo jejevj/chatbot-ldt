@@ -31,7 +31,7 @@ class Settings(BaseSettings):
     
     # Search
     SEARCH_LIMIT: int = 5
-    EMBEDDING_THRESHOLD: float = 0.7
+    EMBEDDING_THRESHOLD: float = 1.2  # Cosine distance threshold (lower = more similar, increased for better recall)
     USE_EMBEDDINGS: bool = True
     
     # Logging
