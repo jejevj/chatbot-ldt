@@ -26,6 +26,15 @@
         </button>
         
         <button
+          v-if="editValue"
+          type="submit"
+          :disabled="!input.trim() || disabled"
+          class="px-6 py-3 bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 dark:disabled:bg-gray-700 text-white rounded-lg transition-colors disabled:cursor-not-allowed"
+        >
+          Kirim
+        </button>
+        
+        <button
           v-else-if="isLoading"
           type="button"
           @click="$emit('cancel')"
