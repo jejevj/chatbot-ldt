@@ -34,6 +34,10 @@ class Settings(BaseSettings):
     EMBEDDING_THRESHOLD: float = 1.2  # Cosine distance threshold (lower = more similar, increased for better recall)
     USE_EMBEDDINGS: bool = True
     
+    # Auto-update embeddings
+    AUTO_UPDATE_EMBEDDINGS: bool = True  # Enable/disable auto-update
+    EMBEDDING_UPDATE_INTERVAL_HOURS: int = 6  # Update interval in hours
+    
     # Logging
     LOG_LEVEL: str = "INFO"
     LOG_FILE: str = "logs/api.log"

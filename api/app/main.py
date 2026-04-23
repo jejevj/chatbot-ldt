@@ -9,6 +9,7 @@ import sys
 
 from app.config import settings
 from app.api.routes import chat, sessions, device, data, health
+from app.scheduler import start_scheduler, stop_scheduler
 
 # Configure logging
 logging.basicConfig(
@@ -54,6 +55,20 @@ app = FastAPI(
     },
     root_path="/chatbot-api"
 )
+
+# Startup event
+@app.on_event("startup")
+async def startup_event():
+    """Start background scheduler on app startup"""
+    logger.info("Starting application...")
+    start_scheduler()
+
+# Shutdown event
+@app.on_event("shutdown")
+async def shutdown_event():
+    """Stop background scheduler on app shutdown"""
+    logger.info("Shutting down application...")
+    stop_scheduler()
 
 # Maintenance mode middleware
 @app.middleware("http")
