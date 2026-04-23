@@ -10,12 +10,30 @@ build/
 .Python
 env/
 .env
+.envrc
 .venv
 venv/
 aienv/
 ENV/
+env.bak/
+venv.bak/
 pip-log.txt
 pip-delete-this-directory.txt
+
+# Testing
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py.cover
+.hypothesis/
+.pytest_cache/
+cover/
 
 # Node
 node_modules/
@@ -33,15 +51,21 @@ dist/
 *.swo
 *~
 .DS_Store
+.spyderproject
+.spyproject
+.ropeproject
 
 # Logs
 *.log
 logs/
+local_settings.py
 
 # Database
 postgres_data/
 *.db
 *.sqlite
+*.sqlite3
+db.sqlite3-journal
 
 # Docker
 .env.local
@@ -60,3 +84,24 @@ Thumbs.db
 build/
 dist/
 *.pyc
+
+# Type checkers
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.pyre/
+.pytype/
+.ruff_cache/
+
+# Jupyter
+.ipynb_checkpoints
+profile_default/
+ipython_config.py
+
+# AI Tools
+.abstra/
+.cursorignore
+.cursorindexingignore
+__marimo__/
+marimo/_static/
+marimo/_lsp/
