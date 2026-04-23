@@ -98,26 +98,33 @@ SITUASI: Tidak ada data yang match dengan keyword pencarian.
 Chat history tersedia untuk konteks.
 
 INSTRUKSI:
-1. Jika sapaan → Jawab 1 kalimat: "Halo! Ada yang bisa saya bantu terkait data pertahanan?"
-2. Jika pertanyaan tentang sistem/cara akses/data apa saja → Jelaskan dengan informatif (3-5 kalimat)
+1. Jika HANYA sapaan tanpa pertanyaan (contoh: "Halo", "Hi", "Selamat pagi") → Jawab 1 kalimat: "Halo! Ada yang bisa saya bantu terkait data pertahanan?"
+2. Jika pertanyaan tentang sistem/cara akses/data apa saja → Jelaskan dengan informatif (3-5 kalimat), JANGAN jawab dengan "Halo"
 3. Jika pertanyaan JELAS di luar topik → Tolak: "Maaf, saya hanya dapat membantu pertanyaan seputar data pertahanan Kemhan RI. Ada yang bisa saya bantu terkait data pertahanan?"
 4. Jika pertanyaan mungkin relevan tapi tidak ada data → Sarankan kata kunci atau jelaskan cara mencari
 
-Jawab dengan MEMBANTU dan INFORMATIF."""
+PENTING: Jika user bertanya sesuatu (ada tanda tanya atau permintaan), LANGSUNG JAWAB pertanyaannya. JANGAN awali dengan sapaan."""
     
     messages.append({"role": "user", "content": user_content})
     
     # Call Qwen3 API
     async with httpx.AsyncClient(timeout=settings.QWEN_TIMEOUT) as client:
         try:
+            payload = {
+                "model": settings.QWEN_MODEL,
+                "messages": messages,
+                "temperature": 0.7,
+                "max_tokens": 3000
+            }
+            
+            # Log request size for debugging
+            import json
+            payload_size = len(json.dumps(payload))
+            logger.info(f"Qwen request size: {payload_size} bytes, messages: {len(messages)}")
+            
             response = await client.post(
                 settings.QWEN_API_URL,
-                json={
-                    "model": settings.QWEN_MODEL,
-                    "messages": messages,
-                    "temperature": 0.7,
-                    "max_tokens": 3000
-                }
+                json=payload
             )
             response.raise_for_status()
             answer = response.json()["choices"][0]["message"]["content"]
@@ -138,6 +145,7 @@ Jawab dengan MEMBANTU dan INFORMATIF."""
         
         except httpx.HTTPStatusError as e:
             logger.error(f"Qwen3 HTTP error: {e.response.status_code}")
+            logger.error(f"Response body: {e.response.text}")
             return "Maaf, terjadi kesalahan pada sistem AI. Silakan coba beberapa saat lagi."
         
         except Exception as e:
