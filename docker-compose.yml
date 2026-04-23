@@ -40,7 +40,9 @@ services:
       QWEN_MODEL: Qwen/Qwen2.5-7B-Instruct-AWQ
       API_HOST: 0.0.0.0
       API_PORT: 8765
-      CORS_ORIGINS: '["http://localhost:8766", "http://localhost:3210"]'
+      CORS_ORIGINS: '["*"]'
+      FORCE_HTTPS: false
+      TRUST_PROXY_HEADERS: true
       LOG_LEVEL: INFO
       MAINTENANCE_MODE: ${MAINTENANCE_MODE:-false}
     ports:

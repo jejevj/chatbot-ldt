@@ -73,6 +73,21 @@ async def maintenance_mode_middleware(request: Request, call_next):
     response = await call_next(request)
     return response
 
+# Security headers middleware
+@app.middleware("http")
+async def security_headers_middleware(request: Request, call_next):
+    """Add security headers"""
+    response = await call_next(request)
+    
+    # Check if request came through HTTPS (from HAProxy)
+    if settings.TRUST_PROXY_HEADERS:
+        forwarded_proto = request.headers.get("X-Forwarded-Proto", "http")
+        if forwarded_proto == "https":
+            # Add HSTS header only for HTTPS requests
+            response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+    
+    return response
+
 # Add CORS middleware
 app.add_middleware(
     CORSMiddleware,

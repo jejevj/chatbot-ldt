@@ -25,7 +25,9 @@ class Settings(BaseSettings):
     API_RELOAD: bool = True
     
     # CORS
-    CORS_ORIGINS: list = ["http://localhost:3210", "http://localhost:5173"]
+    CORS_ORIGINS: list = ["*"]  # Allow all origins
+    FORCE_HTTPS: bool = False  # Let HAProxy handle HTTPS redirect
+    TRUST_PROXY_HEADERS: bool = True  # Trust X-Forwarded-* headers from HAProxy
     
     # Search
     SEARCH_LIMIT: int = 5
