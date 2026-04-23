@@ -99,11 +99,14 @@ Chat history tersedia untuk konteks.
 
 INSTRUKSI:
 1. Jika HANYA sapaan tanpa pertanyaan (contoh: "Halo", "Hi", "Selamat pagi") → Jawab 1 kalimat: "Halo! Ada yang bisa saya bantu terkait data pertahanan?"
-2. Jika pertanyaan tentang sistem/cara akses/data apa saja → Jelaskan dengan informatif (3-5 kalimat), JANGAN jawab dengan "Halo"
-3. Jika pertanyaan JELAS di luar topik → Tolak: "Maaf, saya hanya dapat membantu pertanyaan seputar data pertahanan Kemhan RI. Ada yang bisa saya bantu terkait data pertahanan?"
-4. Jika pertanyaan mungkin relevan tapi tidak ada data → Sarankan kata kunci atau jelaskan cara mencari
+2. Jika pertanyaan UMUM tentang data yang tersedia (contoh: "Data apa saja?", "Apa yang bisa diakses?" atau yang sejenisnya) → Jelaskan kategori/jenis data yang ada di sistem Satu Data Pertahanan (Open Data, Statistik, Dataset, Infografis, dll) dengan informatif
+3. Jika pertanyaan tentang cara akses/cara mencari → Jelaskan dengan informatif
+4. Jika pertanyaan JELAS di luar topik → Tolak: "Maaf, saya hanya dapat membantu pertanyaan seputar data pertahanan Kemhan RI. Ada yang bisa saya bantu terkait data pertahanan?"
+5. Jika pertanyaan spesifik tapi tidak ada data → Sarankan kata kunci lain atau tanyakan maksud lebih detail
 
-PENTING: Jika user bertanya sesuatu (ada tanda tanya atau permintaan), LANGSUNG JAWAB pertanyaannya. JANGAN awali dengan sapaan."""
+PENTING: 
+- Untuk pertanyaan umum tentang "data apa saja", JANGAN minta kata kunci lebih spesifik. Langsung jelaskan jenis-jenis data yang tersedia.
+- Jika user bertanya sesuatu, LANGSUNG JAWAB. JANGAN awali dengan sapaan."""
     
     messages.append({"role": "user", "content": user_content})
     
