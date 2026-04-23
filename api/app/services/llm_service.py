@@ -117,7 +117,7 @@ PENTING:
                 "model": settings.QWEN_MODEL,
                 "messages": messages,
                 "temperature": 0.7,
-                "max_tokens": 3000
+                "max_tokens": 800  # Reduced to fit within 4096 context limit (input + output)
             }
             
             # Log request size for debugging

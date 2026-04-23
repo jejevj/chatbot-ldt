@@ -41,7 +41,7 @@ class Settings(BaseSettings):
     # Session
     SESSION_EXPIRY_DAYS: int = 30
     MAX_MESSAGES_PER_SESSION: int = 100
-    CHAT_HISTORY_LIMIT: int = 10  # Number of previous messages to include in context
+    CHAT_HISTORY_LIMIT: int = 5  # Number of previous messages to include in context (reduced to fit token limit)
     
     # AI Assistant Configuration
     ASSISTANT_NAME: str = "Asisten Satu Data Pertahanan"
