@@ -17,21 +17,28 @@ COPY . .
 # Build the application
 RUN npm run build
 
-# Stage 2: Production
-FROM nginx:alpine
+# Stage 2: Production with Apache
+FROM httpd:2.4-alpine
 
-# Copy custom nginx config
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+# Enable required modules
+RUN sed -i \
+    -e 's/^#\(LoadModule .*mod_rewrite.so\)/\1/' \
+    -e 's/^#\(LoadModule .*mod_deflate.so\)/\1/' \
+    -e 's/^#\(LoadModule .*mod_expires.so\)/\1/' \
+    -e 's/^#\(LoadModule .*mod_headers.so\)/\1/' \
+    /usr/local/apache2/conf/httpd.conf
+
+# Copy Apache config
+COPY apache.conf /usr/local/apache2/conf/extra/httpd-vhosts.conf
+
+# Include vhosts config
+RUN echo "Include conf/extra/httpd-vhosts.conf" >> /usr/local/apache2/conf/httpd.conf
 
 # Copy built files from builder stage
-COPY --from=builder /app/dist /usr/share/nginx/html
+COPY --from=builder /app/dist /usr/local/apache2/htdocs/
 
 # Expose port
 EXPOSE 8766
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD wget --quiet --tries=1 --spider http://localhost:8766/chatbot/ || exit 1
-
-# Start nginx
-CMD ["nginx", "-g", "daemon off;"]
+# Start Apache
+CMD ["httpd-foreground"]
