@@ -100,15 +100,12 @@ def _vector_search(db: Session, query: str, limit: int) -> List:
             logger.info("No results from vector search")
             return []
         
-        # Filter by threshold
-        filtered_results = [r for r in results if r.distance < settings.EMBEDDING_THRESHOLD]
-        
-        if not filtered_results:
-            logger.info("No results below similarity threshold")
-            return []
+        # Always return top results, even if above threshold
+        # This allows AI to show "closest matches" even when not exact
+        top_results = results[:limit]
         
         # Get actual data
-        kode_data_list = [r.DataEmbedding.kode_data for r in filtered_results[:limit]]
+        kode_data_list = [r.DataEmbedding.kode_data for r in top_results]
         
         # Use raw SQL to avoid primary key issues
         sql = text("""

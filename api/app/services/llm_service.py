@@ -83,13 +83,13 @@ Pertanyaan: {query}
 Chat history tersedia untuk konteks.
 
 INSTRUKSI:
-1. Jika pertanyaan tentang data yang ditemukan → Jawab INFORMATIF (3-5 kalimat, lebih detail jika diminta)
+1. Jika pertanyaan tentang data yang ditemukan → Jelaskan data dengan INFORMATIF
 2. Jika follow-up dari chat sebelumnya → Gunakan konteks, jawab sesuai kebutuhan
-3. Jika pertanyaan JELAS di luar topik data pertahanan → Tolak dengan: "Maaf, saya hanya dapat membantu pertanyaan seputar data pertahanan Kemhan RI. Ada yang bisa saya bantu terkait data pertahanan?"
-4. Fokus pada informasi berguna: kategori, tipe, kegunaan, cara akses data
-5. TIDAK PERLU sebutkan URL atau sumber
+3. Jika data ditemukan tapi mungkin tidak exact match → Klarifikasi: "Saya menemukan data yang mungkin terkait dengan pencarian Anda:" lalu jelaskan data tersebut
+4. Jika pertanyaan JELAS di luar topik data pertahanan → Tolak dengan: "Maaf, saya hanya dapat membantu pertanyaan seputar data pertahanan Kemhan RI. Ada yang bisa saya bantu terkait data pertahanan?"
+5. Fokus pada informasi berguna: kategori, tipe, kegunaan, cara akses data
 
-Jawab dengan JELAS dan MEMBANTU."""
+PENTING: Selalu tampilkan data yang ditemukan, meski tidak exact match. Biarkan user yang menilai relevansinya."""
     else:
         user_content = f"""Pertanyaan: {query}
 
