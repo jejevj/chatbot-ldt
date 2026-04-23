@@ -1,0 +1,77 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: chatbot-postgres
+    environment:
+      POSTGRES_DB: satu_data_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: qwert12345!
+      POSTGRES_INITDB_ARGS: "-E UTF8"
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./api/migrations:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - chatbot-network
+    restart: unless-stopped
+
+  # Backend API
+  api:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    container_name: chatbot-api
+    environment:
+      DATABASE_URL: postgresql://postgres:qwert12345!@postgres:5432/satu_data_db
+      QWEN_API_URL: ${QWEN_API_URL:-http://host.docker.internal:9002/v1/chat/completions}
+      QWEN_MODEL: Qwen/Qwen2.5-7B-Instruct-AWQ
+      API_HOST: 0.0.0.0
+      API_PORT: 8765
+      CORS_ORIGINS: '["http://localhost:8766", "http://localhost:3210"]'
+      LOG_LEVEL: INFO
+      MAINTENANCE_MODE: ${MAINTENANCE_MODE:-false}
+    ports:
+      - "8765:8765"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./api/logs:/app/logs
+    networks:
+      - chatbot-network
+    restart: unless-stopped
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  # Frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_BASE_URL: http://localhost:8765/chatbot-api
+    container_name: chatbot-frontend
+    ports:
+      - "8766:8766"
+    depends_on:
+      - api
+    networks:
+      - chatbot-network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  chatbot-network:
+    driver: bridge
