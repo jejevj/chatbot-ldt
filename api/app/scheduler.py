@@ -21,13 +21,15 @@ def update_embeddings():
         
         from app.services.embedding_service import EmbeddingService
         from app.database import DataTerbuka, DataEmbedding
+        from sqlalchemy import text
         
         db = SessionLocal()
         try:
             embedding_service = EmbeddingService()
             
-            # Get all data
-            all_data = db.execute("SELECT * FROM v_detail_data_terbuka").fetchall()
+            # Get all data using text() wrapper
+            result = db.execute(text("SELECT * FROM v_detail_data_terbuka"))
+            all_data = result.fetchall()
             
             # Check for new/updated data
             existing_codes = {e.kode_data for e in db.query(DataEmbedding.kode_data).all()}
@@ -38,8 +40,8 @@ def update_embeddings():
                 
                 if kode_data not in existing_codes:
                     # Generate embedding for new data
-                    text = f"{row[6] or ''} {row[5] or ''}"  # judul + deskripsi
-                    embedding = embedding_service.encode(text)
+                    text_content = f"{row[6] or ''} {row[5] or ''}"  # judul + deskripsi
+                    embedding = embedding_service.encode(text_content)
                     
                     # Save to database
                     db_embedding = DataEmbedding(
