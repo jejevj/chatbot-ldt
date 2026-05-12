@@ -61,6 +61,25 @@ app = FastAPI(
 async def startup_event():
     """Start background scheduler on app startup"""
     logger.info("Starting application...")
+    
+    # Check if embeddings exist, generate if not
+    try:
+        from app.database import SessionLocal, DataEmbedding
+        db = SessionLocal()
+        embedding_count = db.query(DataEmbedding).count()
+        db.close()
+        
+        if embedding_count == 0:
+            logger.info("No embeddings found, generating initial embeddings...")
+            import subprocess
+            subprocess.run(["python", "scripts/generate_embeddings.py"], check=True)
+            logger.info("Initial embeddings generated successfully")
+        else:
+            logger.info(f"Found {embedding_count} existing embeddings")
+    except Exception as e:
+        logger.warning(f"Could not check/generate embeddings: {str(e)}")
+    
+    # Start scheduler for periodic updates
     start_scheduler()
 
 # Shutdown event

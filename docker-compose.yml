@@ -36,7 +36,7 @@ services:
       # Gunakan DATABASE_URL dari .env, atau default ke postgres container
       DATABASE_URL: ${DATABASE_URL:-postgresql://postgres:qwert12345!@postgres:5432/satu_data_db}
       QWEN_API_URL: ${QWEN_API_URL:-http://host.docker.internal:9002/v1/chat/completions}
-      QWEN_MODEL: Qwen/Qwen2.5-7B-Instruct-AWQ
+      QWEN_MODEL: Qwen/Qwen2.5-Coder-14B-Instruct-AWQ
       API_HOST: 0.0.0.0
       API_PORT: 8765
       CORS_ORIGINS: '["*"]'

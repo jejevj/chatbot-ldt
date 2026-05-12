@@ -109,7 +109,7 @@ DATABASE_URL=postgresql://postgres:qwert12345!@127.0.0.1:5433/satu_data_db
 
 # Qwen LLM
 QWEN_API_URL=http://localhost:9002/v1/chat/completions
-QWEN_MODEL=Qwen/Qwen2.5-7B-Instruct-AWQ
+QWEN_MODEL=Qwen/Qwen2.5-Coder-14B-Instruct-AWQ
 
 # Maintenance Mode
 MAINTENANCE_MODE=false

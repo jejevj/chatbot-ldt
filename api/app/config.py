@@ -16,7 +16,7 @@ class Settings(BaseSettings):
     
     # Qwen3 LLM
     QWEN_API_URL: str = "http://localhost:9002/v1/chat/completions"
-    QWEN_MODEL: str = "Qwen/Qwen2.5-7B-Instruct-AWQ"
+    QWEN_MODEL: str = "Qwen/Qwen2.5-Coder-14B-Instruct-AWQ"
     QWEN_TIMEOUT: int = 120
     
     # API
