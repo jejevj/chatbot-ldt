@@ -24,6 +24,22 @@ docker-compose up -d
 
 📖 **Detailed Docker guide**: [DOCKER_DEPLOYMENT.md](DOCKER_DEPLOYMENT.md)
 
+### 🔐 Swagger / API Docs Basic Auth
+
+The API documentation endpoints (`/docs`, `/redoc`, `/openapi.json`) are protected
+with HTTP Basic Authentication. Regular API endpoints are unaffected.
+
+Set the following values in your server `.env` file:
+
+```env
+SWAGGER_AUTH_USERNAME=chatbot_api_user
+SWAGGER_AUTH_PASSWORD=qwert21345!
+SWAGGER_AUTH_REALM=Swagger
+```
+
+If either username or password is left blank, the docs endpoints respond with
+`401 Unauthorized` for every request. Credentials are compared in constant time.
+
 ### Option 2: Manual Setup
 
 #### Backend

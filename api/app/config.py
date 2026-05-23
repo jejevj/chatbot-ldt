@@ -56,6 +56,11 @@ class Settings(BaseSettings):
     MAINTENANCE_MODE: bool = False
     MAINTENANCE_MESSAGE: str = "Sistem sedang dalam pemeliharaan untuk meningkatkan kualitas layanan"
     MAINTENANCE_ETA: Optional[str] = None  # e.g., "2 jam" or "23:00 WIB"
+
+    # Swagger / API docs Basic Auth
+    SWAGGER_AUTH_USERNAME: Optional[str] = None
+    SWAGGER_AUTH_PASSWORD: Optional[str] = None
+    SWAGGER_AUTH_REALM: str = "Swagger"
     
     class Config:
         env_file = ".env"

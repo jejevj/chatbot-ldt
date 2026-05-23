@@ -9,6 +9,7 @@ import sys
 
 from app.config import settings
 from app.api.routes import chat, sessions, device, data, health
+from app.api.docs_auth import register_protected_docs
 from app.scheduler import start_scheduler, stop_scheduler
 
 # Configure logging
@@ -53,8 +54,13 @@ app = FastAPI(
     license_info={
         "name": "MIT",
     },
-    root_path="/chatbot-api"
+    root_path="/chatbot-api",
+    docs_url=None,
+    redoc_url=None,
+    openapi_url=None,
 )
+
+register_protected_docs(app)
 
 # Startup event
 @app.on_event("startup")
