@@ -5,11 +5,11 @@ import { config }    from '../config'
 import { authStore } from '../stores/auth'
 
 // Lazy-load backoffice pages
-const LoginPage      = () => import('../views/backoffice/LoginPage.vue')
-const AIManagement   = () => import('../views/backoffice/AIManagement.vue')
+const LoginPage    = () => import('../views/backoffice/LoginPage.vue')
+const AIManagement = () => import('../views/backoffice/AIManagement.vue')
 
 const routes = [
-  // ── Public routes ──────────────────────────────────────────
+  // ── Public ───────────────────────────────────────────────────
   {
     path: '/',
     name: 'Home',
@@ -25,15 +25,16 @@ const routes = [
     })
   },
 
-  // ── Backoffice ──────────────────────────────────────────────
+  // ── Backoffice ───────────────────────────────────────────────
   {
-    path: '/chatbot/backoffice/login',
+    // URL aktual: /chatbot/backoffice/login (karena vite base = /chatbot/)
+    path: '/backoffice/login',
     name: 'BackofficeLogin',
     component: LoginPage,
-    meta: { guestOnly: true }   // redirect ke dashboard jika sudah login
+    meta: { guestOnly: true }
   },
   {
-    path: '/chatbot/backoffice',
+    path: '/backoffice',
     meta: { requiresAuth: true },
     children: [
       {
@@ -41,7 +42,6 @@ const routes = [
         name: 'BackofficeAIManagement',
         component: AIManagement,
       },
-      // Tambahkan child route backoffice lain di sini
     ]
   },
 
@@ -59,9 +59,7 @@ const router = createRouter({
   routes
 })
 
-// ── Navigation Guards ──────────────────────────────────────────
 router.beforeEach((to, from, next) => {
-  // 1. Maintenance mode
   if (config.maintenance.enabled && to.name !== 'Error') {
     return next({
       name: 'Error',
@@ -70,7 +68,6 @@ router.beforeEach((to, from, next) => {
     })
   }
 
-  // 2. Protected: harus login
   if (to.meta.requiresAuth && !authStore.isLoggedIn) {
     return next({
       name: 'BackofficeLogin',
@@ -78,7 +75,6 @@ router.beforeEach((to, from, next) => {
     })
   }
 
-  // 3. Guest only: kalau sudah login redirect ke dashboard
   if (to.meta.guestOnly && authStore.isLoggedIn) {
     return next({ name: 'BackofficeAIManagement' })
   }
