@@ -1,54 +1,64 @@
 <template>
-  <div class="min-h-screen flex items-center justify-center bg-gray-100">
-    <div class="bg-white rounded-2xl shadow-lg w-full max-w-md p-8">
-      <!-- Logo / Title -->
+  <div class="min-h-screen flex items-center justify-center px-4"
+       style="background: linear-gradient(135deg, #1f1208 0%, #3d2710 40%, #5e3f1f 100%)">
+
+    <!-- Decorative blur blobs -->
+    <div class="pointer-events-none fixed inset-0 overflow-hidden">
+      <div class="absolute -top-32 -left-32 w-96 h-96 rounded-full opacity-20" style="background: radial-gradient(circle, #d07f38, transparent 70%)"></div>
+      <div class="absolute -bottom-32 -right-32 w-96 h-96 rounded-full opacity-15" style="background: radial-gradient(circle, #b8621e, transparent 70%)"></div>
+    </div>
+
+    <div class="bo-glass-card relative w-full max-w-md p-8">
+      <!-- Header -->
       <div class="text-center mb-8">
-        <h1 class="text-2xl font-bold text-gray-800">Backoffice Admin</h1>
-        <p class="text-sm text-gray-500 mt-1">Masuk untuk mengelola sistem chatbot</p>
+        <div class="inline-flex items-center justify-center w-14 h-14 rounded-2xl bo-btn-primary mb-4">
+          <BotMessageSquare :size="28" class="text-white" />
+        </div>
+        <h1 class="text-xl font-bold text-bo-100">Backoffice Admin</h1>
+        <p class="text-bo-300 text-sm mt-1">Masuk untuk mengelola sistem chatbot</p>
       </div>
 
       <!-- Alert Error -->
-      <div v-if="errorMsg" class="mb-4 bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg px-4 py-3">
-        {{ errorMsg }}
+      <div v-if="errorMsg" class="mb-5 flex items-start gap-3 bg-red-500/15 border border-red-500/30 text-red-300 text-sm rounded-xl px-4 py-3">
+        <AlertCircle :size="16" class="mt-0.5 flex-shrink-0" />
+        <span>{{ errorMsg }}</span>
       </div>
 
       <!-- Form -->
       <form @submit.prevent="handleLogin" class="space-y-5">
+        <!-- Username -->
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Username</label>
-          <input
-            v-model="form.username"
-            type="text"
-            placeholder="Masukkan username"
-            required
-            autocomplete="username"
-            class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-          />
+          <label class="block text-xs font-medium text-bo-200 mb-1.5 uppercase tracking-wide">Username</label>
+          <div class="relative">
+            <User :size="15" class="absolute left-3 top-1/2 -translate-y-1/2 text-bo-400" />
+            <input
+              v-model="form.username"
+              type="text"
+              placeholder="Masukkan username"
+              required
+              autocomplete="username"
+              class="bo-input w-full pl-9 pr-4 py-2.5 text-sm"
+            />
+          </div>
         </div>
 
+        <!-- Password -->
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+          <label class="block text-xs font-medium text-bo-200 mb-1.5 uppercase tracking-wide">Password</label>
           <div class="relative">
+            <Lock :size="15" class="absolute left-3 top-1/2 -translate-y-1/2 text-bo-400" />
             <input
               v-model="form.password"
-              :type="showPassword ? 'text' : 'password'"
+              :type="showPass ? 'text' : 'password'"
               placeholder="Masukkan password"
               required
               autocomplete="current-password"
-              class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition pr-10"
+              class="bo-input w-full pl-9 pr-10 py-2.5 text-sm"
             />
-            <button
-              type="button"
-              @click="showPassword = !showPassword"
-              class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-            >
-              <svg v-if="!showPassword" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-              </svg>
-              <svg v-else xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 4.411m0 0L21 21" />
-              </svg>
+            <button type="button" @click="showPass = !showPass"
+              class="absolute right-3 top-1/2 -translate-y-1/2 text-bo-400 hover:text-bo-200 transition">
+              <Eye v-if="!showPass" :size="15" />
+              <EyeOff v-else :size="15" />
             </button>
           </div>
         </div>
@@ -56,10 +66,11 @@
         <button
           type="submit"
           :disabled="loading"
-          class="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white font-semibold py-2.5 rounded-lg text-sm transition"
+          class="bo-btn-primary w-full py-2.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 mt-2"
         >
-          <span v-if="loading">Memproses...</span>
-          <span v-else>Masuk</span>
+          <Loader2 v-if="loading" :size="16" class="animate-spin" />
+          <LogIn v-else :size="16" />
+          <span>{{ loading ? 'Memproses...' : 'Masuk' }}</span>
         </button>
       </form>
     </div>
@@ -69,15 +80,15 @@
 <script setup>
 import { ref, reactive } from 'vue'
 import { useRouter } from 'vue-router'
+import { BotMessageSquare, AlertCircle, User, Lock, Eye, EyeOff, LogIn, Loader2 } from 'lucide-vue-next'
 import { authStore } from '../../stores/auth'
 import { loginAdmin } from '../../services/authService'
 
 const router = useRouter()
-
-const form = reactive({ username: '', password: '' })
-const loading      = ref(false)
-const errorMsg     = ref('')
-const showPassword = ref(false)
+const form     = reactive({ username: '', password: '' })
+const loading  = ref(false)
+const errorMsg = ref('')
+const showPass = ref(false)
 
 async function handleLogin() {
   errorMsg.value = ''
