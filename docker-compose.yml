@@ -1,7 +1,5 @@
 
 services:
-  # PostgreSQL Database (Optional - disable jika sudah punya PostgreSQL eksternal)
-  # Untuk disable: set USE_DOCKER_POSTGRES=false di .env
   postgres:
     image: pgvector/pgvector:pg16
     container_name: chatbot-postgres
@@ -24,44 +22,36 @@ services:
       - chatbot-network
     restart: unless-stopped
     profiles:
-      - with-postgres  # Service ini hanya jalan jika profile 'with-postgres' aktif
+      - with-postgres
 
-  # Backend API
   api:
     build:
       context: ./api
       dockerfile: Dockerfile
     container_name: chatbot-api
     environment:
-      # Database
       DATABASE_URL: ${DATABASE_URL:-postgresql://postgres:qwert12345!@postgres:5432/satu_data_db}
-      # Qwen LLM
       QWEN_API_URL: ${QWEN_API_URL:-http://host.docker.internal:9002/v1/chat/completions}
       QWEN_MODEL: Qwen/Qwen2.5-Coder-14B-Instruct-AWQ
-      # API
       API_HOST: 0.0.0.0
       API_PORT: 8765
       CORS_ORIGINS: '["*"]'
       FORCE_HTTPS: false
       TRUST_PROXY_HEADERS: true
       LOG_LEVEL: INFO
-      # Maintenance
       MAINTENANCE_MODE: ${MAINTENANCE_MODE:-false}
       MAINTENANCE_MESSAGE: ${MAINTENANCE_MESSAGE:-Sistem sedang dalam pemeliharaan}
-      # Swagger / API Docs Basic Auth
       SWAGGER_AUTH_USERNAME: ${SWAGGER_AUTH_USERNAME:-}
       SWAGGER_AUTH_PASSWORD: ${SWAGGER_AUTH_PASSWORD:-}
       SWAGGER_AUTH_REALM: ${SWAGGER_AUTH_REALM:-Swagger}
-      # V2 Admin Key
       ADMIN_SECRET_KEY: ${ADMIN_SECRET_KEY:-changeme-admin-secret}
-      # V2 Upload
       UPLOAD_DIR: ${UPLOAD_DIR:-uploads/kemhan}
     ports:
       - "8765:8765"
     depends_on:
       postgres:
         condition: service_healthy
-        required: false  # Tidak wajib, bisa jalan tanpa postgres container
+        required: false
     volumes:
       - ./api/logs:/app/logs
       - ./api/uploads:/app/uploads
@@ -71,7 +61,6 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
 
-  # Frontend
   frontend:
     build:
       context: ./frontend
@@ -80,7 +69,7 @@ services:
         VITE_API_BASE_URL: https://apps.syscloud.my.id/chatbot-api
     container_name: chatbot-frontend
     ports:
-      - "8766:80"  # host:8766 -> container:80 (Apache default)
+      - "8766:80"
     depends_on:
       - api
     networks:

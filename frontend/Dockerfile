@@ -32,18 +32,17 @@ RUN sed -i \
     -e 's/^#\(LoadModule .*mod_headers.so\)/\1/' \
     /usr/local/apache2/conf/httpd.conf
 
-# Copy Apache vhost config
+# Copy Apache config
 COPY apache.conf /usr/local/apache2/conf/extra/httpd-vhosts.conf
 
-# Include vhosts config (idempotent)
-RUN grep -q 'httpd-vhosts.conf' /usr/local/apache2/conf/httpd.conf \
-    || echo 'Include conf/extra/httpd-vhosts.conf' >> /usr/local/apache2/conf/httpd.conf
+# Include vhosts config
+RUN echo "Include conf/extra/httpd-vhosts.conf" >> /usr/local/apache2/conf/httpd.conf
 
-# Copy built files — taruh di subfolder /chatbot/ sesuai vite base
-COPY --from=builder /app/dist /usr/local/apache2/htdocs/chatbot/
+# Copy built files from builder stage
+COPY --from=builder /app/dist /usr/local/apache2/htdocs/
 
-# Apache listen 80 di dalam container, Docker mapping ke 8766 di luar
-EXPOSE 80
+# Expose port
+EXPOSE 8766
 
 # Start Apache
 CMD ["httpd-foreground"]
