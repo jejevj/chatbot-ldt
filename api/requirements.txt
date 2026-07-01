@@ -43,7 +43,8 @@ starlette==0.35.1
 sympy==1.14.0
 threadpoolctl==3.6.0
 tokenizers==0.15.2
-torch==2.1.2
+# torch di-install via Dockerfile pakai CPU-only build (~200MB vs ~2GB GPU)
+# torch==2.1.2  <-- jangan uncomment ini
 tqdm==4.67.3
 transformers==4.36.2
 typing_extensions==4.15.0

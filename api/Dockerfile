@@ -1,33 +1,31 @@
 # Backend API Dockerfile
 FROM python:3.11-slim
 
-# Set working directory
 WORKDIR /app
 
-# Install system dependencies
+# System dependencies
 RUN apt-get update && apt-get install -y \
     gcc \
     postgresql-client \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements first for better caching
-COPY requirements.txt .
+# Install torch CPU-only dulu (kecil ~200MB vs GPU ~2GB)
+RUN pip install --no-cache-dir \
+    torch==2.1.2+cpu \
+    --index-url https://download.pytorch.org/whl/cpu
 
-# Install Python dependencies
+# Copy dan install sisanya
+COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy application code
 COPY . .
 
-# Create logs directory
-RUN mkdir -p logs
+RUN mkdir -p logs uploads
 
-# Expose port
 EXPOSE 8765
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-    CMD python -c "import requests; requests.get('http://localhost:8765/chatbot-api/health')"
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8765/health')"
 
-# Run the application
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8765"]
