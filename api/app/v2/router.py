@@ -12,3 +12,6 @@ api_router.include_router(admin_infografis.router)
 api_router.include_router(chat.router)
 api_router.include_router(faq.router)
 api_router.include_router(health.router)
+
+# Alias agar import lama (v2_router) tetap bekerja
+v2_router = api_router
