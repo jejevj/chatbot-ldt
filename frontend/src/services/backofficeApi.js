@@ -4,20 +4,17 @@
 import { authStore } from '../stores/auth'
 import { config } from '../config'
 
-const BASE = config.apiBaseUrl  // https://apps.syscloud.my.id/chatbot-api
+const BASE = config.apiBaseUrl
 
 function headers(extra = {}) {
-  return {
-    'Authorization': `Bearer ${authStore.token}`,
-    ...extra,
-  }
+  return { 'Authorization': `Bearer ${authStore.token}`, ...extra }
 }
 
 async function request(method, path, body = null, isFormData = false) {
   const opts = {
     method,
     headers: isFormData
-      ? headers()  // jangan set Content-Type, biar browser set boundary
+      ? headers()
       : headers({ 'Content-Type': 'application/json' }),
   }
   if (body) opts.body = isFormData ? body : JSON.stringify(body)
@@ -53,10 +50,16 @@ export const faqApi = {
   delete: (id)           => request('DELETE', `/v2/admin/faq/${id}`),
 }
 
-// Feedback
+// Feedback / Koreksi
 export const feedbackApi = {
   list:   ()   => request('GET',    '/v2/admin/feedback'),
   create: (p)  => request('POST',   '/v2/admin/feedback', p),
   apply:  (id) => request('POST',   `/v2/admin/feedback/${id}/apply`),
   delete: (id) => request('DELETE', `/v2/admin/feedback/${id}`),
+}
+
+// Public chat (untuk sesi koreksi admin)
+export const chatApi = {
+  send: (message, session_id = null) =>
+    request('POST', '/v2/chat', { message, session_id }, false),
 }
