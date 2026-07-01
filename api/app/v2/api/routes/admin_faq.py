@@ -18,9 +18,7 @@ router = APIRouter(prefix="/admin/faq", tags=["admin-faq"])
 
 
 # ────────────────────────────────────────────────────────
-# LIST FAQ (opsional filter by document_id)
-# GET /v2/admin/faq
-# GET /v2/admin/faq?document_id=3
+# LIST FAQ
 # ────────────────────────────────────────────────────────
 @router.get("", response_model=List[FAQResponse], dependencies=[Depends(require_admin)])
 async def list_faq(
@@ -35,9 +33,8 @@ async def list_faq(
 
 
 # ────────────────────────────────────────────────────────
-# GENERATE FAQ — untuk dokumen yang belum punya FAQ
-# POST /v2/admin/faq/generate
-# Body: { "document_id": 3 }
+# GENERATE FAQ
+# POST /v2/admin/faq/generate   body: { "document_id": 3 }
 # ────────────────────────────────────────────────────────
 @router.post("/generate", response_model=FAQGenerateResponse, dependencies=[Depends(require_admin)])
 async def generate_faq(
@@ -46,7 +43,7 @@ async def generate_faq(
 ):
     """
     Generate 5 FAQ dari dokumen yang belum punya FAQ.
-    Jika sudah ada FAQ untuk dokumen ini, endpoint ini akan menolak — gunakan /regenerate.
+    Jika sudah ada, gunakan /regenerate.
     """
     existing = db.query(KemhanFAQ).filter(KemhanFAQ.document_id == payload.document_id).count()
     if existing > 0:
@@ -55,7 +52,7 @@ async def generate_faq(
             detail=f"Dokumen sudah memiliki {existing} FAQ. Gunakan endpoint /regenerate untuk generate ulang."
         )
     try:
-        faqs = generate_faq_for_document(db, payload.document_id, delete_existing=False)
+        faqs = await generate_faq_for_document(db, payload.document_id, delete_existing=False)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
@@ -71,20 +68,17 @@ async def generate_faq(
 
 
 # ────────────────────────────────────────────────────────
-# REGENERATE FAQ — hapus FAQ lama, generate ulang
-# POST /v2/admin/faq/regenerate
-# Body: { "document_id": 3 }
+# REGENERATE FAQ
+# POST /v2/admin/faq/regenerate   body: { "document_id": 3 }
 # ────────────────────────────────────────────────────────
 @router.post("/regenerate", response_model=FAQGenerateResponse, dependencies=[Depends(require_admin)])
 async def regenerate_faq(
     payload: FAQGenerateRequest,
     db: Session = Depends(get_db),
 ):
-    """
-    Hapus semua FAQ lama milik dokumen ini, lalu generate ulang 5 FAQ baru.
-    """
+    """Hapus semua FAQ lama milik dokumen ini, lalu generate ulang 5 FAQ baru."""
     try:
-        faqs = generate_faq_for_document(db, payload.document_id, delete_existing=True)
+        faqs = await generate_faq_for_document(db, payload.document_id, delete_existing=True)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
@@ -100,14 +94,11 @@ async def regenerate_faq(
 
 
 # ────────────────────────────────────────────────────────
-# CRUD MANUAL (tetap tersedia untuk keperluan edit manual)
-# POST /v2/admin/faq          → tambah FAQ manual
-# PUT  /v2/admin/faq/{id}     → update FAQ
-# DELETE /v2/admin/faq/{id}   → hapus satu FAQ
+# CRUD MANUAL
 # ────────────────────────────────────────────────────────
 @router.post("", response_model=FAQResponse, dependencies=[Depends(require_admin)])
 async def create_faq(payload: FAQCreate, db: Session = Depends(get_db)):
-    """Tambah FAQ manual (tanpa AI). Butuh Bearer JWT admin."""
+    """Tambah FAQ manual (tanpa AI)."""
     faq = KemhanFAQ(**payload.model_dump())
     db.add(faq)
     db.commit()
@@ -117,7 +108,7 @@ async def create_faq(payload: FAQCreate, db: Session = Depends(get_db)):
 
 @router.put("/{faq_id}", response_model=FAQResponse, dependencies=[Depends(require_admin)])
 async def update_faq(faq_id: int, payload: FAQUpdate, db: Session = Depends(get_db)):
-    """Update FAQ. Butuh Bearer JWT admin."""
+    """Update FAQ."""
     faq = db.query(KemhanFAQ).filter(KemhanFAQ.id == faq_id).first()
     if not faq:
         raise HTTPException(status_code=404, detail="FAQ tidak ditemukan")
@@ -130,7 +121,7 @@ async def update_faq(faq_id: int, payload: FAQUpdate, db: Session = Depends(get_
 
 @router.delete("/{faq_id}", dependencies=[Depends(require_admin)])
 async def delete_faq(faq_id: int, db: Session = Depends(get_db)):
-    """Hapus satu FAQ. Butuh Bearer JWT admin."""
+    """Hapus satu FAQ."""
     faq = db.query(KemhanFAQ).filter(KemhanFAQ.id == faq_id).first()
     if not faq:
         raise HTTPException(status_code=404, detail="FAQ tidak ditemukan")
