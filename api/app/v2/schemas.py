@@ -2,7 +2,7 @@
 Pydantic schemas untuk V2 API
 """
 from pydantic import BaseModel, Field
-from typing import Optional, List, Any
+from typing import Optional, List, Any, Dict
 from datetime import datetime
 
 
@@ -110,3 +110,16 @@ class SessionHistoryResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+# ── Admin Auth ────────────────────────────────────────────
+class AdminLoginRequest(BaseModel):
+    username_user: str = Field(..., min_length=1, description="Username admin")
+    password_user: str = Field(..., min_length=1, description="Password admin")
+
+
+class AdminLoginResponse(BaseModel):
+    token: str
+    token_type: str = "bearer"
+    expires_in: int = Field(..., description="Durasi token dalam detik")
+    user: Dict[str, Any]
