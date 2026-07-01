@@ -25,15 +25,15 @@ class KemhanDocument(Base):
     judul = Column(String(500), nullable=False)
     filename = Column(String(500), nullable=False)
     filepath = Column(Text, nullable=False)
-    tipe = Column(String(50), default="umum")  # regulasi, uu, faq, umum
-    status = Column(String(20), default="processing")  # processing, ready, error
+    tipe = Column(String(50), default="umum")
+    status = Column(String(20), default="processing")
     error_message = Column(Text, nullable=True)
     total_chunks = Column(Integer, default=0)
     uploaded_at = Column(TIMESTAMP, server_default=func.now())
     updated_at = Column(TIMESTAMP, server_default=func.now(), onupdate=func.now())
 
     chunks = relationship("KemhanDocChunk", back_populates="document", cascade="all, delete-orphan")
-    faqs   = relationship("KemhanFAQ", back_populates="document", cascade="all, delete-orphan")
+    faqs   = relationship("KemhanFAQ",      back_populates="document", cascade="all, delete-orphan")
 
 
 class KemhanDocChunk(Base):
@@ -48,7 +48,7 @@ class KemhanDocChunk(Base):
     token_count = Column(Integer, default=0)
     created_at = Column(TIMESTAMP, server_default=func.now())
 
-    document = relationship("KemhanDocument", back_populates="chunks")
+    document  = relationship("KemhanDocument", back_populates="chunks")
     embedding = relationship("KemhanEmbedding", back_populates="chunk", uselist=False, cascade="all, delete-orphan")
 
 
@@ -70,18 +70,24 @@ class KemhanFAQ(Base):
 
 
 class KemhanFeedback(Base):
-    """Koreksi jawaban AI oleh admin — digunakan sebagai ground truth"""
+    """
+    Koreksi jawaban AI oleh admin.
+    Field `question_embedding` menyimpan vektor 384-dim dari `pertanyaan_asli`
+    agar matching bisa dilakukan via cosine similarity (pgvector).
+    """
     __tablename__ = "t_kemhan_feedback"
     __table_args__ = {"extend_existing": True}
 
-    id = Column(Integer, primary_key=True, index=True)
-    pertanyaan_asli = Column(Text, nullable=False)
-    jawaban_ai = Column(Text, nullable=False)
-    jawaban_koreksi = Column(Text, nullable=False)
-    catatan_admin = Column(Text, nullable=True)
-    status = Column(String(20), default="pending")  # pending, applied
-    applied_at = Column(TIMESTAMP, nullable=True)
-    created_at = Column(TIMESTAMP, server_default=func.now())
+    id               = Column(Integer, primary_key=True, index=True)
+    pertanyaan_asli  = Column(Text, nullable=False)
+    jawaban_ai       = Column(Text, nullable=False)
+    jawaban_koreksi  = Column(Text, nullable=False)
+    catatan_admin    = Column(Text, nullable=True)
+    status           = Column(String(20), default="pending")   # pending | applied
+    applied_at       = Column(TIMESTAMP, nullable=True)
+    created_at       = Column(TIMESTAMP, server_default=func.now())
+    # Kolom baru — vektor embedding pertanyaan_asli (nullable agar backward compatible)
+    question_embedding = Column(Vector(384), nullable=True) if PGVECTOR_AVAILABLE else Column(Text, nullable=True)
 
 
 class KemhanChatSession(Base):
@@ -89,10 +95,10 @@ class KemhanChatSession(Base):
     __tablename__ = "t_kemhan_chat_sessions"
     __table_args__ = {"extend_existing": True}
 
-    id = Column(Integer, primary_key=True, index=True)
+    id         = Column(Integer, primary_key=True, index=True)
     session_id = Column(String(255), unique=True, nullable=False, index=True)
-    device_id = Column(String(255), nullable=True, index=True)
-    title = Column(String(500), nullable=True)
+    device_id  = Column(String(255), nullable=True, index=True)
+    title      = Column(String(500), nullable=True)
     created_at = Column(TIMESTAMP, server_default=func.now())
     updated_at = Column(TIMESTAMP, server_default=func.now(), onupdate=func.now())
 
@@ -104,11 +110,11 @@ class KemhanChatMessage(Base):
     __tablename__ = "t_kemhan_chat_messages"
     __table_args__ = {"extend_existing": True}
 
-    id = Column(Integer, primary_key=True, index=True)
+    id         = Column(Integer, primary_key=True, index=True)
     session_id = Column(String(255), ForeignKey("t_kemhan_chat_sessions.session_id", ondelete="CASCADE"), nullable=False, index=True)
-    role = Column(String(20), nullable=False)  # user, assistant
-    content = Column(Text, nullable=False)
-    sources = Column(JSON, nullable=True)
+    role       = Column(String(20), nullable=False)  # user | assistant
+    content    = Column(Text, nullable=False)
+    sources    = Column(JSON, nullable=True)
     created_at = Column(TIMESTAMP, server_default=func.now())
 
     session = relationship("KemhanChatSession", back_populates="messages")
@@ -120,9 +126,9 @@ if PGVECTOR_AVAILABLE:
         __tablename__ = "t_kemhan_embeddings"
         __table_args__ = {"extend_existing": True}
 
-        id = Column(Integer, primary_key=True, index=True)
-        chunk_id = Column(Integer, ForeignKey("t_kemhan_doc_chunks.id", ondelete="CASCADE"), unique=True, nullable=False, index=True)
-        embedding = Column(Vector(384))
+        id         = Column(Integer, primary_key=True, index=True)
+        chunk_id   = Column(Integer, ForeignKey("t_kemhan_doc_chunks.id", ondelete="CASCADE"), unique=True, nullable=False, index=True)
+        embedding  = Column(Vector(384))
         created_at = Column(TIMESTAMP, server_default=func.now())
 
         chunk = relationship("KemhanDocChunk", back_populates="embedding")
