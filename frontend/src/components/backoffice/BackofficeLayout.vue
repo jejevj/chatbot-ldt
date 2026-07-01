@@ -16,7 +16,6 @@
 
       <!-- Nav -->
       <nav class="flex-1 px-3 py-4 space-y-0.5">
-        <!-- Section label -->
         <p class="text-bo-500 text-xs font-semibold uppercase tracking-widest px-3 pb-2 pt-1">Manajemen</p>
 
         <router-link
@@ -78,7 +77,7 @@
 <script setup>
 import { computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { BotMessageSquare, BookMarked, MessagesSquare, BrainCircuit, LogOut, UserCircle } from 'lucide-vue-next'
+import { BotMessageSquare, BookMarked, MessagesSquare, BrainCircuit, ListChecks, LogOut, UserCircle } from 'lucide-vue-next'
 import { authStore } from '../../stores/auth'
 
 const router = useRouter()
@@ -90,6 +89,12 @@ const menu = [
     label: 'Dokumen Rujukan',
     desc: 'Upload & kelola dokumen sumber',
     icon: BookMarked,
+  },
+  {
+    name: 'ManajemenFAQ',
+    label: 'Manajemen FAQ',
+    desc: 'Generate & kelola FAQ per dokumen',
+    icon: ListChecks,
   },
   {
     name: 'TanyaJawab',

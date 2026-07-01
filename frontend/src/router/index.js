@@ -8,6 +8,7 @@ const LoginPage      = () => import('../views/backoffice/LoginPage.vue')
 const DokumenRujukan = () => import('../views/backoffice/DokumenRujukan.vue')
 const TanyaJawab     = () => import('../views/backoffice/TanyaJawab.vue')
 const PelatihanAI    = () => import('../views/backoffice/PelatihanAI.vue')
+const ManajemenFAQ   = () => import('../views/backoffice/ManajemenFAQ.vue')
 
 const routes = [
   { path: '/', name: 'Home', component: ChatView },
@@ -25,6 +26,7 @@ const routes = [
     path: '/backoffice', meta: { requiresAuth: true },
     children: [
       { path: 'dokumen',   name: 'DokumenRujukan', component: DokumenRujukan },
+      { path: 'faq',       name: 'ManajemenFAQ',   component: ManajemenFAQ },
       { path: 'tanya-jawab', name: 'TanyaJawab',  component: TanyaJawab },
       { path: 'pelatihan', name: 'PelatihanAI',   component: PelatihanAI },
     ]
