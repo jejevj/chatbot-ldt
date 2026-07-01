@@ -12,6 +12,10 @@ from app.api.routes import chat, sessions, device, data, health
 from app.api.docs_auth import register_protected_docs
 from app.scheduler import start_scheduler, stop_scheduler
 
+# V2 router
+from app.v2.router import v2_router
+from app.v2.database import init_v2_tables
+
 # Configure logging
 logging.basicConfig(
     level=settings.LOG_LEVEL,
@@ -27,26 +31,19 @@ logger = logging.getLogger(__name__)
 app = FastAPI(
     title="RAG Chatbot API",
     description="""
-    ## Retrieval-Augmented Generation API untuk Data Terbuka Indonesia
-    
-    API ini menyediakan chatbot berbasis RAG yang dapat:
-    * 🔍 Mencari data terbuka Indonesia
-    * 💬 Menjawab pertanyaan dengan konteks
-    * 📚 Menyimpan riwayat percakapan
-    * 🔐 Autentikasi berbasis device fingerprint
-    
-    ### Features
-    * **Smart Search**: Keyword-based dan vector similarity search
-    * **Chat History**: Per-device session management
-    * **Context-Aware**: Mengingat percakapan sebelumnya
-    * **Real-time**: Streaming responses (coming soon)
-    
-    ### Tech Stack
-    * FastAPI + PostgreSQL + pgvector
-    * Qwen3 LLM untuk generation
-    * Sentence Transformers untuk embeddings
+    ## Retrieval-Augmented Generation API
+
+    ### V1 — Data Terbuka Indonesia
+    * Pencarian data terbuka
+    * Chat berbasis RAG dataset
+
+    ### V2 — Kemhan Chatbot
+    * Upload dokumen rujukan (PDF/DOCX/TXT)
+    * Tanya jawab seputar Kemhan & regulasi
+    * FAQ management
+    * Feedback & training koreksi jawaban AI
     """,
-    version="1.0.0",
+    version="2.0.0",
     contact={
         "name": "API Support",
         "email": "support@example.com",
@@ -62,19 +59,25 @@ app = FastAPI(
 
 register_protected_docs(app)
 
-# Startup event
+# ── Startup ────────────────────────────────────────────────────────────────
 @app.on_event("startup")
 async def startup_event():
-    """Start background scheduler on app startup"""
+    """Start background scheduler dan inisialisasi tabel v2"""
     logger.info("Starting application...")
-    
-    # Check if embeddings exist, generate if not
+
+    # Init tabel v2
+    try:
+        init_v2_tables()
+        logger.info("V2 tables initialized")
+    except Exception as e:
+        logger.warning(f"Could not initialize v2 tables: {e}")
+
+    # Check embeddings v1
     try:
         from app.database import SessionLocal, DataEmbedding
         db = SessionLocal()
         embedding_count = db.query(DataEmbedding).count()
         db.close()
-        
         if embedding_count == 0:
             logger.info("No embeddings found, generating initial embeddings...")
             import subprocess
@@ -84,22 +87,26 @@ async def startup_event():
             logger.info(f"Found {embedding_count} existing embeddings")
     except Exception as e:
         logger.warning(f"Could not check/generate embeddings: {str(e)}")
-    
-    # Start scheduler for periodic updates
-    start_scheduler()
 
-# Shutdown event
+    start_scheduler()
+    logger.info("Starting RAG Chatbot API...")
+    logger.info(f"Database: {settings.DATABASE_URL.split('@')[1]}")
+    logger.info(f"Qwen: {settings.QWEN_API_URL}")
+    logger.info(f"Embeddings: {'enabled' if settings.USE_EMBEDDINGS else 'disabled'}")
+    if settings.MAINTENANCE_MODE:
+        logger.warning(f"\u26a0\ufe0f  MAINTENANCE MODE ENABLED: {settings.MAINTENANCE_MESSAGE}")
+
+
+# ── Shutdown ───────────────────────────────────────────────────────────────
 @app.on_event("shutdown")
 async def shutdown_event():
-    """Stop background scheduler on app shutdown"""
     logger.info("Shutting down application...")
     stop_scheduler()
 
-# Maintenance mode middleware
+
+# ── Middleware ─────────────────────────────────────────────────────────────
 @app.middleware("http")
 async def maintenance_mode_middleware(request: Request, call_next):
-    """Check if maintenance mode is enabled"""
-    # Allow health check and root endpoint during maintenance
     if settings.MAINTENANCE_MODE and request.url.path not in ["/health", "/", "/docs", "/redoc", "/openapi.json"]:
         return JSONResponse(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
@@ -109,26 +116,19 @@ async def maintenance_mode_middleware(request: Request, call_next):
                 "status": "maintenance"
             }
         )
-    
-    response = await call_next(request)
-    return response
+    return await call_next(request)
 
-# Security headers middleware
+
 @app.middleware("http")
 async def security_headers_middleware(request: Request, call_next):
-    """Add security headers"""
     response = await call_next(request)
-    
-    # Check if request came through HTTPS (from HAProxy)
     if settings.TRUST_PROXY_HEADERS:
         forwarded_proto = request.headers.get("X-Forwarded-Proto", "http")
         if forwarded_proto == "https":
-            # Add HSTS header only for HTTPS requests
             response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
-    
     return response
 
-# Add CORS middleware
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.CORS_ORIGINS,
@@ -137,40 +137,28 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Include routers
+
+# ── V1 Routers ─────────────────────────────────────────────────────────────
 app.include_router(health.router)
 app.include_router(chat.router)
 app.include_router(sessions.router)
 app.include_router(device.router)
 app.include_router(data.router)
 
-@app.on_event("startup")
-async def startup_event():
-    """Startup event"""
-    logger.info("Starting RAG Chatbot API...")
-    logger.info(f"Database: {settings.DATABASE_URL.split('@')[1]}")
-    logger.info(f"Qwen3: {settings.QWEN_API_URL}")
-    logger.info(f"Embeddings: {'enabled' if settings.USE_EMBEDDINGS else 'disabled'}")
-    if settings.MAINTENANCE_MODE:
-        logger.warning(f"⚠️  MAINTENANCE MODE ENABLED: {settings.MAINTENANCE_MESSAGE}")
+# ── V2 Routers (prefix /v2) ────────────────────────────────────────────────
+app.include_router(v2_router, prefix="/v2")
 
-@app.on_event("shutdown")
-async def shutdown_event():
-    """Shutdown event"""
-    logger.info("Shutting down RAG Chatbot API...")
 
+# ── Root ───────────────────────────────────────────────────────────────────
 @app.get("/", tags=["root"])
 async def root():
-    """
-    Root endpoint - API information
-    
-    Returns basic API information and links to documentation.
-    """
     return {
         "message": "RAG Chatbot API",
-        "version": "1.0.0",
+        "version": "2.0.0",
+        "v1": "/chatbot-api/",
+        "v2": "/chatbot-api/v2/",
         "docs": "/docs",
-        "redoc": "/redoc",
-        "health": "/health",
-        "maintenance": settings.MAINTENANCE_MODE
+        "health_v1": "/health",
+        "health_v2": "/v2/health",
+        "maintenance": settings.MAINTENANCE_MODE,
     }
