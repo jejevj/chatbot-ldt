@@ -2,13 +2,77 @@
   <BackofficeLayout>
     <div class="space-y-5">
 
-      <!-- Step 1: Pilih Dokumen -->
+      <!-- ===== SECTION 1: FAQ Generator ===== -->
+      <div class="bo-glass-card overflow-hidden">
+        <div class="px-5 py-3.5 border-b border-white/10 flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <Sparkles :size="15" class="text-amber-400" />
+            <span class="text-bo-100 font-semibold text-sm">Generate FAQ per Dokumen</span>
+          </div>
+          <span class="text-xs text-bo-500">AI menyimpulkan 5 FAQ otomatis dari tiap dokumen</span>
+        </div>
+
+        <div class="p-5 space-y-4">
+          <!-- Pilih dokumen -->
+          <div>
+            <label class="block text-xs text-bo-300 mb-1.5">Pilih Dokumen</label>
+            <div class="flex gap-2">
+              <div class="relative flex-1">
+                <select v-model="faqDocId" class="bo-input w-full px-3 py-2.5 text-sm">
+                  <option value="" disabled>-- Pilih dokumen rujukan --</option>
+                  <option v-for="d in readyDocs" :key="d.id" :value="d.id">{{ d.judul }}</option>
+                </select>
+              </div>
+              <button
+                @click="handleGenerate"
+                :disabled="!faqDocId || generating"
+                class="bo-btn-primary px-4 py-2.5 rounded-xl text-sm font-medium flex items-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed min-w-max">
+                <Loader2 v-if="generating" :size="14" class="animate-spin" />
+                <Wand2 v-else :size="14" />
+                {{ faqItems.length ? 'Regenerate FAQ' : 'Generate FAQ' }}
+              </button>
+            </div>
+
+            <!-- Info belum ada dok ready -->
+            <p v-if="readyDocs.length === 0 && !loadingDocs" class="mt-2 text-xs text-amber-400 flex items-center gap-1">
+              <AlertCircle :size="12" /> Belum ada dokumen dengan status <em>ready</em>.
+              <router-link :to="{ name: 'DokumenRujukan' }" class="underline hover:text-white">Upload dokumen dulu</router-link>
+            </p>
+          </div>
+
+          <!-- Preview FAQ setelah generate -->
+          <div v-if="generateMsg" class="flex items-center gap-1.5 text-xs" :class="generateMsg.type === 'ok' ? 'text-emerald-400' : 'text-red-400'">
+            <CheckCircle2 v-if="generateMsg.type === 'ok'" :size="12" />
+            <AlertCircle  v-else :size="12" />
+            {{ generateMsg.text }}
+          </div>
+
+          <!-- Daftar FAQ hasil generate -->
+          <div v-if="faqItems.length" class="space-y-2">
+            <p class="text-xs text-bo-400 font-medium">{{ faqItems.length }} FAQ untuk dokumen ini:</p>
+            <div v-for="(faq, i) in faqItems" :key="faq.id || i"
+              class="flex items-start gap-3 bg-bo-900/40 border border-bo-700/30 rounded-xl px-4 py-3">
+              <span class="flex-shrink-0 w-5 h-5 rounded-full bg-bo-700/50 flex items-center justify-center text-xs text-bo-300 font-bold mt-0.5">{{ i+1 }}</span>
+              <div class="flex-1 min-w-0">
+                <p class="text-sm text-bo-100 font-medium">{{ faq.pertanyaan }}</p>
+                <p class="text-xs text-bo-400 mt-1 leading-relaxed">{{ faq.jawaban }}</p>
+              </div>
+            </div>
+          </div>
+
+          <div v-if="loadingFaqPreview" class="py-4 text-center text-bo-400 text-sm">
+            <Loader2 :size="18" class="animate-spin mx-auto" />
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== SECTION 2: Sesi Koreksi AI ===== -->
       <div v-if="!activeSession" class="bo-glass-card p-6">
         <h3 class="text-bo-100 font-semibold text-sm mb-1 flex items-center gap-2">
-          <BrainCircuit :size="15" /> Mulai Sesi Pelatihan
+          <BrainCircuit :size="15" /> Sesi Koreksi AI
         </h3>
         <p class="text-bo-400 text-xs mb-5">
-          Pilih dokumen rujukan, ajukan pertanyaan ke AI, lalu koreksi jawaban yang salah.
+          Pilih dokumen, ajukan pertanyaan ke AI, lalu koreksi jawaban yang salah.
           Koreksi akan disimpan sebagai bahan pelatihan.
         </p>
 
@@ -23,7 +87,6 @@
               placeholder="Cari dokumen..."
               class="bo-input w-full pl-9 pr-4 py-2.5 text-sm"
             />
-            <!-- Dropdown -->
             <div v-if="showDrop && filteredDocs.length"
               class="absolute z-30 mt-1 w-full bo-glass-card overflow-hidden max-h-52 overflow-y-auto">
               <button v-for="doc in filteredDocs" :key="doc.id"
@@ -39,7 +102,6 @@
             </div>
           </div>
 
-          <!-- Chip -->
           <div v-if="selectedDoc" class="mt-2 flex items-center gap-2 bg-bo-800/40 border border-bo-700/40 rounded-lg px-3 py-2">
             <BookMarked :size="13" class="text-bo-300 flex-shrink-0" />
             <span class="text-sm text-bo-100 flex-1 truncate">{{ selectedDoc.judul }}</span>
@@ -51,18 +113,17 @@
 
         <button @click="startSession" :disabled="!selectedDoc"
           class="bo-btn-primary px-5 py-2.5 rounded-xl text-sm font-medium flex items-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed">
-          <MessageSquarePlus :size="15" /> Mulai Sesi
+          <MessageSquarePlus :size="15" /> Mulai Sesi Koreksi
         </button>
       </div>
 
-      <!-- Step 2: Chat + Koreksi -->
+      <!-- Chat Koreksi -->
       <div v-else class="space-y-3">
-        <!-- Session bar -->
         <div class="bo-glass-card px-5 py-3 flex items-center justify-between">
           <div class="flex items-center gap-3">
             <BookMarked :size="14" class="text-bo-400" />
             <div>
-              <p class="text-xs text-bo-400">Sesi aktif</p>
+              <p class="text-xs text-bo-400">Sesi koreksi aktif</p>
               <p class="text-sm font-medium text-bo-100">{{ selectedDoc.judul }}</p>
             </div>
           </div>
@@ -71,23 +132,20 @@
           </button>
         </div>
 
-        <!-- Chat -->
         <div class="bo-glass-card overflow-hidden">
-          <div ref="chatRef" class="h-[26rem] overflow-y-auto p-4 space-y-4">
+          <div ref="chatRef" class="h-[24rem] overflow-y-auto p-4 space-y-4">
             <div v-if="messages.length === 0" class="h-full flex flex-col items-center justify-center text-bo-400 text-sm gap-2">
               <BrainCircuit :size="30" class="opacity-20" />
               <p>Ajukan pertanyaan untuk menguji AI</p>
             </div>
 
             <template v-for="(msg, idx) in messages" :key="idx">
-              <!-- User -->
               <div v-if="msg.role === 'user'" class="flex justify-end">
                 <div class="max-w-lg bg-bo-800/60 border border-bo-700/40 rounded-2xl rounded-tr-sm px-4 py-2.5">
                   <p class="text-sm text-bo-100">{{ msg.content }}</p>
                 </div>
               </div>
 
-              <!-- AI -->
               <div v-else class="flex flex-col gap-1">
                 <div class="flex items-start gap-2.5">
                   <div class="w-7 h-7 rounded-lg bg-gradient-to-br from-bo-600 to-bo-800 flex items-center justify-center flex-shrink-0 mt-0.5">
@@ -110,7 +168,6 @@
                   </div>
                 </div>
 
-                <!-- Form Koreksi Inline -->
                 <div v-if="msg.correcting" class="ml-9 bo-glass-card p-4 space-y-3">
                   <p class="text-xs text-bo-300 font-medium">Jawaban yang seharusnya diberikan AI:</p>
                   <textarea v-model="msg.correctionText" rows="3"
@@ -135,7 +192,6 @@
               </div>
             </template>
 
-            <!-- Typing -->
             <div v-if="aiTyping" class="flex items-center gap-2.5">
               <div class="w-7 h-7 rounded-lg bg-gradient-to-br from-bo-600 to-bo-800 flex items-center justify-center">
                 <Bot :size="13" class="text-white" />
@@ -160,7 +216,7 @@
         </div>
       </div>
 
-      <!-- Riwayat Data Latihan -->
+      <!-- ===== SECTION 3: Riwayat Data Latihan ===== -->
       <div class="bo-glass-card overflow-hidden">
         <div class="flex items-center justify-between px-5 py-3.5 border-b border-white/10">
           <span class="text-bo-100 font-semibold text-sm flex items-center gap-2">
@@ -224,49 +280,77 @@ import { ref, computed, onMounted, nextTick } from 'vue'
 import {
   BrainCircuit, Search, BookMarked, X, MessageSquarePlus,
   Bot, PenLine, Save, CheckCircle2, SendHorizontal,
-  History, RefreshCw, Loader2, Trash2, CheckCheck
+  History, RefreshCw, Loader2, Trash2, CheckCheck,
+  Sparkles, Wand2, AlertCircle
 } from 'lucide-vue-next'
 import BackofficeLayout from '../../components/backoffice/BackofficeLayout.vue'
 import StatusBadge      from '../../components/backoffice/StatusBadge.vue'
 import ConfirmModal     from '../../components/backoffice/ConfirmModal.vue'
-import { docApi, feedbackApi, chatApi } from '../../services/backofficeApi'
+import { docApi, feedbackApi, chatApi, faqApi } from '../../services/backofficeApi'
 
-// Dokumen
+// ─── Dokumen ────────────────────────────────────────────
 const allDocs      = ref([])
+const loadingDocs  = ref(true)
+const readyDocs    = computed(() => allDocs.value.filter(d => d.status === 'ready'))
+
+// ─── FAQ Generator ──────────────────────────────────────
+const faqDocId        = ref('')
+const faqItems        = ref([])
+const generating      = ref(false)
+const loadingFaqPreview = ref(false)
+const generateMsg     = ref(null)
+
+async function handleGenerate() {
+  if (!faqDocId.value) return
+  generating.value  = true
+  generateMsg.value = null
+
+  try {
+    // Cek apakah sudah ada FAQ → regenerate, belum → generate
+    const existing = await faqApi.listByDoc(faqDocId.value).catch(() => [])
+    const res = existing.length
+      ? await faqApi.regenerate(faqDocId.value)
+      : await faqApi.generate(faqDocId.value)
+
+    generateMsg.value = { type: 'ok', text: `${res.length ?? 5} FAQ berhasil di-generate oleh AI` }
+    loadFaqPreview()
+  } catch (e) {
+    generateMsg.value = { type: 'err', text: e.message }
+  } finally {
+    generating.value = false
+  }
+}
+
+async function loadFaqPreview() {
+  if (!faqDocId.value) return
+  loadingFaqPreview.value = true
+  try { faqItems.value = await faqApi.listByDoc(faqDocId.value) }
+  catch { faqItems.value = [] }
+  finally { loadingFaqPreview.value = false }
+}
+
+// watch faqDocId — load existing FAQ saat pilih dokumen
+import { watch } from 'vue'
+watch(faqDocId, () => { faqItems.value = []; generateMsg.value = null; loadFaqPreview() })
+
+// ─── Sesi Koreksi ───────────────────────────────────────
 const docSearch    = ref('')
 const showDrop     = ref(false)
 const selectedDoc  = ref(null)
-
 const filteredDocs = computed(() =>
-  allDocs.value
-    .filter(d => d.status === 'ready')
-    .filter(d => d.judul.toLowerCase().includes(docSearch.value.toLowerCase()))
+  readyDocs.value.filter(d => d.judul.toLowerCase().includes(docSearch.value.toLowerCase()))
 )
 
-function selectDoc(doc) {
-  selectedDoc.value = doc
-  docSearch.value   = doc.judul
-  showDrop.value    = false
-}
+function selectDoc(doc) { selectedDoc.value = doc; docSearch.value = doc.judul; showDrop.value = false }
 
-// Session
 const activeSession = ref(null)
 const messages      = ref([])
 const inputMsg      = ref('')
 const aiTyping      = ref(false)
 const chatRef       = ref(null)
 
-function startSession() {
-  if (!selectedDoc.value) return
-  activeSession.value = `train-${Date.now()}`
-  messages.value = []
-}
-
-function endSession() {
-  activeSession.value = null
-  messages.value = []
-  inputMsg.value = ''
-}
+function startSession() { activeSession.value = `train-${Date.now()}`; messages.value = [] }
+function endSession() { activeSession.value = null; messages.value = []; inputMsg.value = '' }
 
 async function sendMessage() {
   const text = inputMsg.value.trim()
@@ -284,10 +368,7 @@ async function sendMessage() {
     })
   } catch (e) {
     messages.value.push({ role: 'assistant', content: `Error: ${e.message}`, correcting: false, corrected: false })
-  } finally {
-    aiTyping.value = false
-    scroll()
-  }
+  } finally { aiTyping.value = false; scroll() }
 }
 
 function scroll() {
@@ -299,10 +380,10 @@ async function saveCorrection(msg, idx) {
   msg.saving = true
   try {
     await feedbackApi.create({
-      pertanyaan_asli:  userMsg?.content || '',
-      jawaban_ai:       msg.content,
-      jawaban_koreksi:  msg.correctionText,
-      catatan_admin:    msg.correctionNote || null,
+      pertanyaan_asli: userMsg?.content || '',
+      jawaban_ai:      msg.content,
+      jawaban_koreksi: msg.correctionText,
+      catatan_admin:   msg.correctionNote || null,
     })
     msg.correcting = false
     msg.corrected  = true
@@ -311,11 +392,11 @@ async function saveCorrection(msg, idx) {
   finally { msg.saving = false }
 }
 
-// Feedback history
-const feedbacks    = ref([])
-const loadingFb    = ref(false)
-const showConfirm  = ref(false)
-const selectedFb   = ref(null)
+// ─── Riwayat Feedback ───────────────────────────────────
+const feedbacks   = ref([])
+const loadingFb   = ref(false)
+const showConfirm = ref(false)
+const selectedFb  = ref(null)
 
 function formatDate(dt) {
   if (!dt) return '-'
@@ -324,21 +405,23 @@ function formatDate(dt) {
 
 async function fetchFeedbacks() {
   loadingFb.value = true
-  try { feedbacks.value = await feedbackApi.list() } catch (e) { console.error(e) }
+  try { feedbacks.value = await feedbackApi.list() } catch(e) { console.error(e) }
   finally { loadingFb.value = false }
 }
 
 async function applyFeedback(fb) {
-  try { await feedbackApi.apply(fb.id); fetchFeedbacks() } catch (e) { console.error(e) }
+  try { await feedbackApi.apply(fb.id); fetchFeedbacks() } catch(e) { console.error(e) }
 }
 
 function confirmDelete(fb) { selectedFb.value = fb; showConfirm.value = true }
 async function deleteFeedback() {
-  try { await feedbackApi.delete(selectedFb.value.id); fetchFeedbacks() } catch (e) { console.error(e) }
+  try { await feedbackApi.delete(selectedFb.value.id); fetchFeedbacks() } catch(e) { console.error(e) }
 }
 
+// ─── Init ───────────────────────────────────────────────
 onMounted(async () => {
-  allDocs.value = await docApi.list().catch(() => [])
+  try { allDocs.value = await docApi.list() } catch(e) { console.error(e) }
+  finally { loadingDocs.value = false }
   fetchFeedbacks()
 })
 </script>

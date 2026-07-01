@@ -44,10 +44,11 @@ export const docApi = {
 
 // FAQ
 export const faqApi = {
-  list:   ()             => request('GET',    '/v2/admin/faq'),
-  create: (payload)      => request('POST',   '/v2/admin/faq', payload),
-  update: (id, payload)  => request('PUT',    `/v2/admin/faq/${id}`, payload),
-  delete: (id)           => request('DELETE', `/v2/admin/faq/${id}`),
+  list:        ()        => request('GET',    '/v2/admin/faq'),
+  listByDoc:   (docId)   => request('GET',    `/v2/admin/faq?document_id=${docId}`),
+  generate:    (docId)   => request('POST',   `/v2/admin/faq/generate`, { document_id: docId }),
+  regenerate:  (docId)   => request('POST',   `/v2/admin/faq/regenerate`, { document_id: docId }),
+  delete:      (id)      => request('DELETE', `/v2/admin/faq/${id}`),
 }
 
 // Feedback / Koreksi
