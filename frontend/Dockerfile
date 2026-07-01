@@ -24,22 +24,24 @@ RUN npm run build
 # Stage 2: Production with Apache
 FROM httpd:2.4-alpine
 
-# Enable required modules
+# Enable required modules + ganti Listen 80 ke 8766
 RUN sed -i \
     -e 's/^#\(LoadModule .*mod_rewrite.so\)/\1/' \
     -e 's/^#\(LoadModule .*mod_deflate.so\)/\1/' \
     -e 's/^#\(LoadModule .*mod_expires.so\)/\1/' \
     -e 's/^#\(LoadModule .*mod_headers.so\)/\1/' \
+    -e 's/^Listen 80$/Listen 8766/' \
     /usr/local/apache2/conf/httpd.conf
 
-# Copy Apache config
+# Copy Apache vhost config
 COPY apache.conf /usr/local/apache2/conf/extra/httpd-vhosts.conf
 
-# Include vhosts config
-RUN echo "Include conf/extra/httpd-vhosts.conf" >> /usr/local/apache2/conf/httpd.conf
+# Include vhosts config (idempotent)
+RUN grep -q 'httpd-vhosts.conf' /usr/local/apache2/conf/httpd.conf \
+    || echo 'Include conf/extra/httpd-vhosts.conf' >> /usr/local/apache2/conf/httpd.conf
 
-# Copy built files from builder stage
-COPY --from=builder /app/dist /usr/local/apache2/htdocs/
+# Copy built files — taruh di subfolder /chatbot/ sesuai vite base
+COPY --from=builder /app/dist /usr/local/apache2/htdocs/chatbot/
 
 # Expose port
 EXPOSE 8766
