@@ -15,7 +15,7 @@
       </div>
 
       <!-- Nav -->
-      <nav class="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
+      <nav class="flex-1 px-3 py-4 space-y-0.5">
         <p class="text-bo-500 text-xs font-semibold uppercase tracking-widest px-3 pb-2 pt-1">Manajemen</p>
 
         <router-link
@@ -25,10 +25,8 @@
           class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-bo-300 hover:text-white hover:bg-white/10 transition-all group"
           active-class="bg-white/15 text-white font-medium shadow-inner"
         >
-          <div
-            class="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
-            :class="activeRoute === item.name ? 'bg-bo-700/60' : 'bg-white/5 group-hover:bg-white/10'"
-          >
+          <div class="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
+            :class="activeRoute === item.name ? 'bg-bo-700/60' : 'bg-white/5 group-hover:bg-white/10'">
             <component :is="item.icon" :size="15" />
           </div>
           <div class="flex-1 min-w-0">
@@ -83,10 +81,7 @@
 <script setup>
 import { computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import {
-  BotMessageSquare, BookMarked, MessagesSquare, BrainCircuit,
-  ListChecks, PanelsTopLeft, LogOut, UserCircle
-} from 'lucide-vue-next'
+import { BotMessageSquare, BookMarked, MessagesSquare, BrainCircuit, ListChecks, PanelsTopLeft, LogOut, UserCircle } from 'lucide-vue-next'
 import { authStore } from '../../stores/auth'
 
 const router = useRouter()
@@ -106,13 +101,6 @@ const menu = [
     icon: ListChecks,
   },
   {
-    name: 'GenerateInfografis',
-    label: 'Generate Infografis',
-    desc: 'Buat infografis SVG dari dokumen',
-    icon: PanelsTopLeft,
-    beta: true,
-  },
-  {
     name: 'TanyaJawab',
     label: 'Tanya Jawab',
     desc: 'Uji chatbot dengan dokumen',
@@ -124,10 +112,17 @@ const menu = [
     desc: 'Koreksi & latih ulang AI',
     icon: BrainCircuit,
   },
+  {
+    name: 'GenerateInfografis',
+    label: 'Generate Infografis',
+    desc: 'Buat infografis SVG dari dokumen',
+    icon: PanelsTopLeft,
+    beta: true,
+  },
 ]
 
-const activeRoute = computed(() => route.name)
-const currentMenu = computed(() => menu.find(m => m.name === route.name))
+const activeRoute  = computed(() => route.name)
+const currentMenu  = computed(() => menu.find(m => m.name === route.name))
 
 function handleLogout() {
   authStore.logout()

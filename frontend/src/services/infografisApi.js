@@ -1,5 +1,5 @@
 /**
- * API generasi infografis SVG dari dokumen
+ * API service untuk generate infografis SVG dari dokumen
  */
 import { authStore } from '../stores/auth'
 import { config } from '../config'
@@ -10,14 +10,12 @@ function headers(extra = {}) {
   return { 'Authorization': `Bearer ${authStore.token}`, ...extra }
 }
 
-async function request(method, path, body = null, isFormData = false) {
+async function request(method, path, body = null) {
   const opts = {
     method,
-    headers: isFormData
-      ? headers()
-      : headers({ 'Content-Type': 'application/json' }),
+    headers: headers({ 'Content-Type': 'application/json' }),
   }
-  if (body) opts.body = isFormData ? body : JSON.stringify(body)
+  if (body) opts.body = JSON.stringify(body)
 
   const res = await fetch(`${BASE}${path}`, opts)
 
@@ -36,5 +34,5 @@ async function request(method, path, body = null, isFormData = false) {
 }
 
 export const infografisApi = {
-  generate: (docId) => request('POST', `/v2/admin/infografis/generate`, { document_id: docId }),
+  generate: (docId) => request('POST', '/v2/admin/infografis/generate', { document_id: docId }),
 }

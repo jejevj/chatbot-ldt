@@ -1,10 +1,10 @@
 """
-Admin Infografis API — generate SVG dari dokumen rujukan (beta)
+Admin Infografis API — generate SVG infografis dari dokumen rujukan (beta)
 
 Flow:
-  1. Ambil konten teks dokumen dari t_kemhan_doc_chunks
-  2. Panggil LLM dengan prompt khusus infografis SVG
-  3. Normalisasi output (strip markdown fence jika ada)
+  1. Ambil teks dokumen dari t_kemhan_doc_chunks (maks 9000 karakter)
+  2. Panggil LLM dengan prompt infografis SVG
+  3. Normalisasi output (strip markdown fence)
   4. Return JSON: { judul_dokumen, svg }
 """
 from fastapi import APIRouter, Depends, HTTPException
@@ -23,40 +23,35 @@ class InfografisRequest(BaseModel):
     document_id: int
 
 
-SYSTEM = """\
+SYSTEM_PROMPT = """\
 Kamu adalah perancang infografis berbasis SVG untuk dokumen resmi pemerintah Indonesia.
-Tugasmu:
-  1. Membaca isi dokumen yang diberikan secara menyeluruh.
-  2. Menyimpulkan data dan poin penting yang cocok divisualisasikan:
-     - angka (jumlah, persentase, anggaran, tahun)
-     - tanggal atau periode penting
-     - nama program, kebijakan, atau unit organisasi
-     - struktur atau hierarki jika ada
-  3. Menghasilkan KODE SVG MURNI untuk infografis.
+Tugas:
+  1. Baca isi dokumen yang diberikan secara menyeluruh.
+  2. Simpulkan data penting: angka, tanggal, program, struktur organisasi.
+  3. Hasilkan kode SVG murni untuk infografis.
 
-Spesifikasi SVG:
-  - Width: 960, Height: 540 (rasio 16:9)
-  - Tema: latar belakang gelap (#1a1a2e atau serupa), aksen emas/amber (#f59e0b), teks putih
-  - Font: font-family sans-serif
-  - Struktur: header judul, subjudul/ringkasan, 3-6 kartu/panel berisi data utama
-  - Gunakan <rect>, <text>, <line>, <circle> — jangan gunakan foreignObject
+Spesifikasi SVG wajib:
+  - width="960" height="540" (rasio 16:9)
+  - Latar belakang gelap (#1a1a2e), aksen emas (#f59e0b), teks putih (#ffffff)
+  - font-family="Arial, sans-serif"
+  - Struktur: judul header, subjudul ringkasan, 3-6 panel data utama
+  - Gunakan elemen: rect, text, line, circle (JANGAN foreignObject)
 
-Aturan WAJIB:
-  - Output HANYA tag <svg>...</svg>, tanpa markdown, tanpa penjelasan lain
-  - Jangan gunakan data di luar dokumen yang diberikan
-  - Semua teks harus dalam bahasa Indonesia
+Aturan:
+  - Output HANYA tag <svg>...</svg> tanpa markdown, tanpa teks lain
+  - Hanya gunakan data dari dokumen yang diberikan
+  - Semua teks dalam bahasa Indonesia
 """
 
-USER_TEMPLATE = """\
+USER_PROMPT = """\
 Dokumen: "{judul}"
 
-Isi dokumen:
+Isi:
 ---
 {konten}
 ---
 
-Buat infografis SVG 960x540 dari dokumen di atas.
-Output hanya berupa tag <svg>...</svg>, tanpa teks atau markdown lain.
+Hasilkan infografis SVG 960x540. Output hanya <svg>...</svg>.
 """
 
 
@@ -71,9 +66,9 @@ def _get_doc_text(db: Session, document_id: int, max_chars: int = 9000) -> str:
     for ch in chunks:
         text = ch.chunk_text or ""
         if total + len(text) > max_chars:
-            remaining = max_chars - total
-            if remaining > 100:
-                parts.append(text[:remaining])
+            sisa = max_chars - total
+            if sisa > 100:
+                parts.append(text[:sisa])
             break
         parts.append(text)
         total += len(text)
@@ -91,37 +86,29 @@ async def generate_infografis(
     if not doc:
         raise HTTPException(status_code=404, detail="Dokumen tidak ditemukan")
     if doc.status != "ready":
-        raise HTTPException(
-            status_code=400,
-            detail=f"Dokumen belum siap (status: {doc.status}). Tunggu proses selesai."
-        )
+        raise HTTPException(status_code=400, detail=f"Dokumen belum siap (status: {doc.status})")
 
     konten = _get_doc_text(db, payload.document_id)
     if not konten.strip():
-        raise HTTPException(
-            status_code=400,
-            detail="Dokumen tidak memiliki konten teks yang cukup untuk infografis."
-        )
+        raise HTTPException(status_code=400, detail="Dokumen tidak memiliki konten teks yang cukup")
 
     messages = [
-        {"role": "system", "content": SYSTEM},
-        {"role": "user",   "content": USER_TEMPLATE.format(judul=doc.judul, konten=konten)},
+        {"role": "system", "content": SYSTEM_PROMPT},
+        {"role": "user",   "content": USER_PROMPT.format(judul=doc.judul, konten=konten)},
     ]
 
-    raw = (await call_llm(messages, temperature=0.4)).strip()
+    raw = await call_llm(messages)
+    raw = raw.strip()
 
-    # Strip markdown fence jika ada: ```svg ... ``` atau ``` ... ```
+    # Strip markdown fence jika ada
     if raw.startswith("```"):
-        lines = raw.split("\n")
+        lines   = raw.split("\n")
         end_idx = next((i for i in range(len(lines) - 1, 0, -1) if lines[i].strip() == "```"), len(lines))
-        raw = "\n".join(lines[1:end_idx]).strip()
+        raw     = "\n".join(lines[1:end_idx]).strip()
 
-    # Ambil substring <svg>...</svg>
+    # Ekstrak <svg>...</svg>
     start = raw.find("<svg")
     end   = raw.lower().rfind("</svg>")
-    if start != -1 and end != -1 and end > start:
-        svg = raw[start:end + len("</svg>")]
-    else:
-        svg = raw  # fallback
+    svg   = raw[start:end + len("</svg>")] if start != -1 and end > start else raw
 
     return {"judul_dokumen": doc.judul, "svg": svg}

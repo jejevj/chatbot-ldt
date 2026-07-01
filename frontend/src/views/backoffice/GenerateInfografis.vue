@@ -1,21 +1,20 @@
 <template>
   <BackofficeLayout>
     <div class="space-y-5">
+
       <!-- Header Beta -->
       <div class="bo-glass-card p-5 border border-amber-500/30">
-        <div class="flex items-center justify-between gap-3 mb-3">
-          <div class="flex items-center gap-2">
-            <Sparkles :size="16" class="text-amber-300" />
-            <h3 class="text-bo-100 font-semibold text-sm flex items-center gap-2">
-              Beta: Generate Infografis
-              <span class="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-200 font-medium uppercase tracking-widest">Eksperimental</span>
-            </h3>
-          </div>
+        <div class="flex items-center gap-2 mb-2">
+          <Sparkles :size="16" class="text-amber-300" />
+          <h3 class="text-bo-100 font-semibold text-sm">
+            Beta: Generate Infografis
+            <span class="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-200 font-medium uppercase tracking-widest ml-1">Eksperimental</span>
+          </h3>
         </div>
         <p class="text-bo-400 text-xs mb-4">
           Pilih satu dokumen rujukan. AI akan membaca isi dokumen lalu menyimpulkan
-          poin-poin penting yang cocok dijadikan infografis (judul, ringkasan, dan data utama),
-          kemudian menghasilkan kode SVG yang siap ditampilkan.
+          poin-poin penting yang cocok dijadikan infografis, kemudian menghasilkan
+          kode SVG yang siap ditampilkan.
         </p>
 
         <!-- Loading dokumen -->
@@ -23,12 +22,12 @@
           <Loader2 :size="12" class="animate-spin" /> Memuat daftar dokumen...
         </div>
 
-        <!-- Selector Dokumen + Generate -->
+        <!-- Selector + tombol -->
         <div v-else class="flex flex-wrap gap-3 items-end">
           <div class="flex-1 min-w-56">
             <label class="block text-xs text-bo-300 mb-1">
               Pilih Dokumen
-              <span class="text-bo-500">({{ docs.length }} tersedia)</span>
+              <span class="text-bo-500">({{ docs.length }} siap dipakai)</span>
             </label>
             <select v-model="selectedId" class="bo-input w-full px-3 py-2 text-sm">
               <option value="" disabled>-- Pilih dokumen rujukan --</option>
@@ -49,6 +48,7 @@
           </button>
         </div>
 
+        <!-- Status pesan -->
         <div v-if="statusMsg" class="mt-3 flex items-center gap-1.5 text-xs"
           :class="statusMsg.type === 'ok' ? 'text-emerald-400' : 'text-red-400'">
           <CheckCircle2 v-if="statusMsg.type === 'ok'" :size="12" />
@@ -57,13 +57,13 @@
         </div>
       </div>
 
-      <!-- Preview Infografis SVG -->
+      <!-- Preview SVG -->
       <div class="bo-glass-card p-5 min-h-64 flex flex-col gap-3">
         <div class="flex items-center justify-between">
           <h4 class="text-bo-100 text-sm font-semibold flex items-center gap-2">
             <LayoutPanelTop :size="14" /> Pratinjau Infografis
           </h4>
-          <div class="flex gap-2" v-if="svgCode">
+          <div v-if="svgCode" class="flex gap-2">
             <button
               @click="downloadSvg"
               class="text-xs px-3 py-1 rounded-lg border border-white/15 text-bo-200 hover:bg-white/10 transition flex items-center gap-1"
@@ -91,11 +91,11 @@
           <p class="text-xs mt-1 text-bo-500">Pilih dokumen lalu klik "Generate Infografis".</p>
         </div>
 
-        <!-- Render SVG -->
         <div v-else class="mt-2 bg-black/20 rounded-xl p-4 border border-white/10 overflow-auto">
           <div class="w-full flex items-start justify-center" v-html="svgCode" />
         </div>
       </div>
+
     </div>
   </BackofficeLayout>
 </template>
@@ -125,11 +125,10 @@ async function fetchDocs() {
   statusMsg.value   = null
   try {
     const all = await docApi.list()
-    // Pastikan array, filter hanya dokumen yg sudah siap
     const arr = Array.isArray(all) ? all : (all?.items ?? [])
     docs.value = arr.filter(d => d.status === 'ready')
     if (docs.value.length === 0) {
-      statusMsg.value = { type: 'err', text: 'Belum ada dokumen yang siap dipakai. Upload dan proses dokumen terlebih dahulu.' }
+      statusMsg.value = { type: 'err', text: 'Belum ada dokumen yang siap. Upload dan proses dokumen terlebih dahulu.' }
     }
   } catch (e) {
     console.error('[infografis] gagal load docs:', e)
@@ -144,7 +143,7 @@ async function handleGenerate() {
   statusMsg.value       = null
   loadingGenerate.value = true
   svgCode.value         = ''
-  selectedJudul.value   = docs.value.find(d => d.id === selectedId.value)?.judul ?? ''
+  selectedJudul.value   = docs.value.find(d => d.id === selectedId.value)?.judul ?? 'dokumen'
   try {
     const res = await infografisApi.generate(selectedId.value)
     svgCode.value = res.svg || ''
@@ -172,7 +171,7 @@ function downloadSvg() {
   const url  = URL.createObjectURL(blob)
   const a    = document.createElement('a')
   a.href     = url
-  a.download = `infografis-${selectedJudul.value.replace(/\s+/g, '-').toLowerCase() || 'dokumen'}.svg`
+  a.download = `infografis-${selectedJudul.value.replace(/\s+/g, '-').toLowerCase()}.svg`
   a.click()
   URL.revokeObjectURL(url)
 }

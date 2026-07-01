@@ -1,17 +1,17 @@
+"""
+V2 Router aggregator — semua route v2 dikumpulkan di sini
+lalu di-include ke main app dengan prefix /v2
+"""
 from fastapi import APIRouter
+from app.v2.api.routes import health, chat, faq, admin_documents, admin_faq, admin_feedback, admin_auth, admin_infografis
 
-from app.v2.api.routes import admin_auth, admin_documents, admin_faq, admin_feedback, chat, faq, health, admin_infografis
+v2_router = APIRouter()
 
-api_router = APIRouter(prefix="/v2")
-
-api_router.include_router(admin_auth.router)
-api_router.include_router(admin_documents.router)
-api_router.include_router(admin_faq.router)
-api_router.include_router(admin_feedback.router)
-api_router.include_router(admin_infografis.router)
-api_router.include_router(chat.router)
-api_router.include_router(faq.router)
-api_router.include_router(health.router)
-
-# Alias agar import lama (v2_router) tetap bekerja
-v2_router = api_router
+v2_router.include_router(health.router)
+v2_router.include_router(chat.router)
+v2_router.include_router(faq.router)
+v2_router.include_router(admin_documents.router)
+v2_router.include_router(admin_faq.router)
+v2_router.include_router(admin_feedback.router)
+v2_router.include_router(admin_auth.router)
+v2_router.include_router(admin_infografis.router)
