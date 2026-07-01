@@ -14,9 +14,9 @@ class Settings(BaseSettings):
     DB_POOL_SIZE: int = 20
     DB_MAX_OVERFLOW: int = 40
     
-    # Qwen3 LLM
+    # Qwen LLM
     QWEN_API_URL: str = "http://localhost:9002/v1/chat/completions"
-    QWEN_MODEL: str = "Qwen/Qwen2.5-Coder-14B-Instruct-AWQ"
+    QWEN_MODEL: str = "huggingface.co/quantfactory/qwen2.5-7b-instruct-uncensored-gguf:Q4_K_M"
     QWEN_TIMEOUT: int = 120
     
     # API
