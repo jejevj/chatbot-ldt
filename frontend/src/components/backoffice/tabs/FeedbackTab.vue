@@ -12,7 +12,6 @@
       <div class="mb-4">
         <label class="block text-xs text-bo-300 mb-1.5">Pilih Dokumen Referensi</label>
         <div class="relative">
-          <!-- Search input -->
           <div class="relative">
             <Search :size="14" class="absolute left-3 top-1/2 -translate-y-1/2 text-bo-400" />
             <input
@@ -24,8 +23,6 @@
               class="bo-input w-full pl-9 pr-4 py-2.5 text-sm"
             />
           </div>
-
-          <!-- Dropdown -->
           <div v-if="showDocDropdown && filteredDocs.length"
             class="absolute z-30 mt-1 w-full bo-glass-card overflow-hidden max-h-56 overflow-y-auto">
             <button
@@ -43,7 +40,6 @@
           </div>
         </div>
 
-        <!-- Selected doc chip -->
         <div v-if="selectedDoc" class="mt-2 flex items-center gap-2 bg-bo-800/40 border border-bo-700/40 rounded-lg px-3 py-2">
           <FileText :size="13" class="text-bo-300 flex-shrink-0" />
           <span class="text-sm text-bo-100 flex-1 truncate">{{ selectedDoc.judul }}</span>
@@ -64,7 +60,6 @@
 
     <!-- STEP 2: Chat Session -->
     <div v-else class="space-y-4">
-      <!-- Session Header -->
       <div class="bo-glass-card px-5 py-3.5 flex items-center justify-between">
         <div class="flex items-center gap-3">
           <div class="w-8 h-8 rounded-lg bg-bo-800/60 flex items-center justify-center">
@@ -81,9 +76,7 @@
         </button>
       </div>
 
-      <!-- Chat Box -->
       <div class="bo-glass-card overflow-hidden">
-        <!-- Messages -->
         <div ref="chatBoxRef" class="h-96 overflow-y-auto p-4 space-y-4">
           <div v-if="messages.length === 0" class="h-full flex flex-col items-center justify-center text-bo-400 text-sm gap-2">
             <MessageSquare :size="28" class="opacity-30" />
@@ -91,14 +84,12 @@
           </div>
 
           <template v-for="(msg, idx) in messages" :key="idx">
-            <!-- User bubble -->
             <div v-if="msg.role === 'user'" class="flex justify-end">
               <div class="max-w-lg bg-bo-800/60 border border-bo-700/40 rounded-2xl rounded-tr-sm px-4 py-2.5">
                 <p class="text-sm text-bo-100">{{ msg.content }}</p>
               </div>
             </div>
 
-            <!-- AI bubble -->
             <div v-else class="flex flex-col gap-1.5">
               <div class="flex items-start gap-2.5">
                 <div class="w-7 h-7 rounded-lg bg-gradient-to-br from-bo-600 to-bo-800 flex items-center justify-center flex-shrink-0 mt-0.5">
@@ -108,7 +99,6 @@
                   <div class="bo-glass max-w-lg rounded-2xl rounded-tl-sm px-4 py-2.5">
                     <p class="text-sm text-bo-100 whitespace-pre-wrap">{{ msg.content }}</p>
                   </div>
-                  <!-- Correction action -->
                   <div class="mt-1.5 ml-1">
                     <button
                       v-if="!msg.correcting && !msg.corrected"
@@ -124,7 +114,6 @@
                 </div>
               </div>
 
-              <!-- Inline Correction Form -->
               <div v-if="msg.correcting" class="ml-9 bo-glass-card p-4 space-y-3">
                 <p class="text-xs text-bo-300 flex items-center gap-1.5">
                   <PenLine :size="12" /> Masukkan jawaban yang benar
@@ -154,7 +143,6 @@
             </div>
           </template>
 
-          <!-- Typing indicator -->
           <div v-if="aiTyping" class="flex items-center gap-2.5">
             <div class="w-7 h-7 rounded-lg bg-gradient-to-br from-bo-600 to-bo-800 flex items-center justify-center">
               <Bot :size="13" class="text-white" />
@@ -167,7 +155,6 @@
           </div>
         </div>
 
-        <!-- Input -->
         <div class="border-t border-white/10 p-3 flex gap-2">
           <input
             v-model="inputMsg"
@@ -215,12 +202,8 @@
         </thead>
         <tbody>
           <tr v-for="fb in feedbacks" :key="fb.id">
-            <td class="max-w-xs">
-              <p class="truncate">{{ fb.pertanyaan_asli }}</p>
-            </td>
-            <td class="max-w-sm">
-              <p class="truncate">{{ fb.jawaban_koreksi }}</p>
-            </td>
+            <td class="max-w-xs"><p class="truncate">{{ fb.pertanyaan_asli }}</p></td>
+            <td class="max-w-sm"><p class="truncate">{{ fb.jawaban_koreksi }}</p></td>
             <td><StatusBadge :status="fb.status" /></td>
             <td>{{ formatDate(fb.created_at) }}</td>
             <td class="text-right pr-4">
@@ -257,7 +240,6 @@ import {
 import { docApi, feedbackApi, chatApi } from '../../../services/backofficeApi'
 import StatusBadge  from '../StatusBadge.vue'
 import ConfirmModal from '../ConfirmModal.vue'
-import { v4 as uuidv4 } from 'uuid' // fallback: pakai timestamp
 
 // ── Dokumen ─────────────────────────────────────────────
 const docs            = ref([])
@@ -272,8 +254,8 @@ const filteredDocs = computed(() =>
 )
 
 function selectDoc(doc) {
-  selectedDoc.value  = doc
-  docSearch.value    = doc.judul
+  selectedDoc.value     = doc
+  docSearch.value       = doc.judul
   showDocDropdown.value = false
 }
 
@@ -335,7 +317,6 @@ function scrollBottom() {
 
 // ── Koreksi ──────────────────────────────────────────────
 async function saveCorrection(msg, idx) {
-  // Cari pertanyaan user sebelumnya
   const userMsg = [...messages.value].slice(0, idx).reverse().find(m => m.role === 'user')
   try {
     await feedbackApi.create({
