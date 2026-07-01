@@ -4,11 +4,12 @@ import ErrorPage from '../views/ErrorPage.vue'
 import { config }    from '../config'
 import { authStore } from '../stores/auth'
 
-const LoginPage      = () => import('../views/backoffice/LoginPage.vue')
-const DokumenRujukan = () => import('../views/backoffice/DokumenRujukan.vue')
-const TanyaJawab     = () => import('../views/backoffice/TanyaJawab.vue')
-const PelatihanAI    = () => import('../views/backoffice/PelatihanAI.vue')
-const ManajemenFAQ   = () => import('../views/backoffice/ManajemenFAQ.vue')
+const LoginPage        = () => import('../views/backoffice/LoginPage.vue')
+const DokumenRujukan   = () => import('../views/backoffice/DokumenRujukan.vue')
+const TanyaJawab       = () => import('../views/backoffice/TanyaJawab.vue')
+const PelatihanAI      = () => import('../views/backoffice/PelatihanAI.vue')
+const ManajemenFAQ     = () => import('../views/backoffice/ManajemenFAQ.vue')
+const GenerateInfografis = () => import('../views/backoffice/GenerateInfografis.vue')
 
 const routes = [
   { path: '/', name: 'Home', component: ChatView },
@@ -25,10 +26,11 @@ const routes = [
   {
     path: '/backoffice', meta: { requiresAuth: true },
     children: [
-      { path: 'dokumen',   name: 'DokumenRujukan', component: DokumenRujukan },
-      { path: 'faq',       name: 'ManajemenFAQ',   component: ManajemenFAQ },
-      { path: 'tanya-jawab', name: 'TanyaJawab',  component: TanyaJawab },
-      { path: 'pelatihan', name: 'PelatihanAI',   component: PelatihanAI },
+      { path: 'dokumen',      name: 'DokumenRujukan',    component: DokumenRujukan },
+      { path: 'faq',          name: 'ManajemenFAQ',      component: ManajemenFAQ },
+      { path: 'infografis',   name: 'GenerateInfografis', component: GenerateInfografis },
+      { path: 'tanya-jawab',  name: 'TanyaJawab',        component: TanyaJawab },
+      { path: 'pelatihan',    name: 'PelatihanAI',       component: PelatihanAI },
     ]
   },
 
@@ -47,7 +49,6 @@ router.beforeEach((to, from, next) => {
   if (to.meta.guestOnly && authStore.isLoggedIn)
     return next({ name: 'DokumenRujukan' })
 
-  // redirect /backoffice ke halaman pertama
   if (to.path === '/backoffice') return next({ name: 'DokumenRujukan' })
 
   next()
