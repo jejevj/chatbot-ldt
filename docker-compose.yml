@@ -33,17 +33,29 @@ services:
       dockerfile: Dockerfile
     container_name: chatbot-api
     environment:
-      # Gunakan DATABASE_URL dari .env, atau default ke postgres container
+      # Database
       DATABASE_URL: ${DATABASE_URL:-postgresql://postgres:qwert12345!@postgres:5432/satu_data_db}
+      # Qwen LLM
       QWEN_API_URL: ${QWEN_API_URL:-http://host.docker.internal:9002/v1/chat/completions}
       QWEN_MODEL: Qwen/Qwen2.5-Coder-14B-Instruct-AWQ
+      # API
       API_HOST: 0.0.0.0
       API_PORT: 8765
       CORS_ORIGINS: '["*"]'
       FORCE_HTTPS: false
       TRUST_PROXY_HEADERS: true
       LOG_LEVEL: INFO
+      # Maintenance
       MAINTENANCE_MODE: ${MAINTENANCE_MODE:-false}
+      MAINTENANCE_MESSAGE: ${MAINTENANCE_MESSAGE:-Sistem sedang dalam pemeliharaan}
+      # Swagger / API Docs Basic Auth
+      SWAGGER_AUTH_USERNAME: ${SWAGGER_AUTH_USERNAME:-}
+      SWAGGER_AUTH_PASSWORD: ${SWAGGER_AUTH_PASSWORD:-}
+      SWAGGER_AUTH_REALM: ${SWAGGER_AUTH_REALM:-Swagger}
+      # V2 Admin Key
+      ADMIN_SECRET_KEY: ${ADMIN_SECRET_KEY:-changeme-admin-secret}
+      # V2 Upload
+      UPLOAD_DIR: ${UPLOAD_DIR:-uploads/kemhan}
     ports:
       - "8765:8765"
     depends_on:
@@ -52,6 +64,7 @@ services:
         required: false  # Tidak wajib, bisa jalan tanpa postgres container
     volumes:
       - ./api/logs:/app/logs
+      - ./api/uploads:/app/uploads
     networks:
       - chatbot-network
     restart: unless-stopped
