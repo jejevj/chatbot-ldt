@@ -15,7 +15,7 @@ router = APIRouter(prefix="/admin/feedback", tags=["admin-feedback"])
 
 @router.post("", response_model=FeedbackResponse, dependencies=[Depends(require_admin)])
 async def create_feedback(payload: FeedbackCreate, db: Session = Depends(get_db)):
-    """Admin submit koreksi jawaban AI"""
+    """Admin submit koreksi jawaban AI. Butuh Bearer JWT admin."""
     fb = KemhanFeedback(**payload.model_dump())
     db.add(fb)
     db.commit()
@@ -25,17 +25,13 @@ async def create_feedback(payload: FeedbackCreate, db: Session = Depends(get_db)
 
 @router.get("", response_model=List[FeedbackResponse], dependencies=[Depends(require_admin)])
 async def list_feedback(db: Session = Depends(get_db)):
-    """List semua feedback koreksi"""
+    """List semua feedback koreksi. Butuh Bearer JWT admin."""
     return db.query(KemhanFeedback).order_by(KemhanFeedback.created_at.desc()).all()
 
 
 @router.post("/{feedback_id}/apply", response_model=FeedbackResponse, dependencies=[Depends(require_admin)])
 async def apply_feedback(feedback_id: int, db: Session = Depends(get_db)):
-    """
-    Terapkan koreksi sebagai ground truth.
-    Setelah di-apply, jawaban koreksi ini akan dipakai sebagai referensi
-    prioritas tertinggi dalam RAG pipeline.
-    """
+    """Terapkan koreksi sebagai ground truth. Butuh Bearer JWT admin."""
     fb = db.query(KemhanFeedback).filter(KemhanFeedback.id == feedback_id).first()
     if not fb:
         raise HTTPException(status_code=404, detail="Feedback tidak ditemukan")
@@ -51,7 +47,7 @@ async def apply_feedback(feedback_id: int, db: Session = Depends(get_db)):
 
 @router.delete("/{feedback_id}", dependencies=[Depends(require_admin)])
 async def delete_feedback(feedback_id: int, db: Session = Depends(get_db)):
-    """Hapus feedback"""
+    """Hapus feedback. Butuh Bearer JWT admin."""
     fb = db.query(KemhanFeedback).filter(KemhanFeedback.id == feedback_id).first()
     if not fb:
         raise HTTPException(status_code=404, detail="Feedback tidak ditemukan")

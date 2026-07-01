@@ -14,7 +14,7 @@ router = APIRouter(prefix="/admin/faq", tags=["admin-faq"])
 
 @router.post("", response_model=FAQResponse, dependencies=[Depends(require_admin)])
 async def create_faq(payload: FAQCreate, db: Session = Depends(get_db)):
-    """Tambah FAQ baru"""
+    """Tambah FAQ baru. Butuh Bearer JWT admin."""
     faq = KemhanFAQ(**payload.model_dump())
     db.add(faq)
     db.commit()
@@ -24,13 +24,13 @@ async def create_faq(payload: FAQCreate, db: Session = Depends(get_db)):
 
 @router.get("", response_model=List[FAQResponse], dependencies=[Depends(require_admin)])
 async def list_faq_admin(db: Session = Depends(get_db)):
-    """List semua FAQ termasuk yang nonaktif"""
+    """List semua FAQ termasuk yang nonaktif. Butuh Bearer JWT admin."""
     return db.query(KemhanFAQ).order_by(KemhanFAQ.created_at.desc()).all()
 
 
 @router.put("/{faq_id}", response_model=FAQResponse, dependencies=[Depends(require_admin)])
 async def update_faq(faq_id: int, payload: FAQUpdate, db: Session = Depends(get_db)):
-    """Update FAQ"""
+    """Update FAQ. Butuh Bearer JWT admin."""
     faq = db.query(KemhanFAQ).filter(KemhanFAQ.id == faq_id).first()
     if not faq:
         raise HTTPException(status_code=404, detail="FAQ tidak ditemukan")
@@ -43,7 +43,7 @@ async def update_faq(faq_id: int, payload: FAQUpdate, db: Session = Depends(get_
 
 @router.delete("/{faq_id}", dependencies=[Depends(require_admin)])
 async def delete_faq(faq_id: int, db: Session = Depends(get_db)):
-    """Hapus FAQ"""
+    """Hapus FAQ. Butuh Bearer JWT admin."""
     faq = db.query(KemhanFAQ).filter(KemhanFAQ.id == faq_id).first()
     if not faq:
         raise HTTPException(status_code=404, detail="FAQ tidak ditemukan")

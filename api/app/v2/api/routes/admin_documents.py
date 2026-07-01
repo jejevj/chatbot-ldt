@@ -40,7 +40,6 @@ def _process_and_embed(doc_id: int, filepath: str, db_url: str):
             overlap=v2_settings.V2_CHUNK_OVERLAP,
         )
 
-        # Simpan chunks
         chunk_objs = []
         for i, chunk_text in enumerate(chunks):
             c = KemhanDocChunk(
@@ -55,7 +54,6 @@ def _process_and_embed(doc_id: int, filepath: str, db_url: str):
         for c in chunk_objs:
             db.refresh(c)
 
-        # Generate embeddings
         if KemhanEmbedding is not None:
             texts = [c.chunk_text for c in chunk_objs]
             vectors = embed_texts(texts)
@@ -87,24 +85,21 @@ async def upload_document(
     file: UploadFile = File(...),
     db: Session = Depends(get_db),
 ):
-    """Upload dokumen rujukan (PDF/DOCX/TXT). Chunking & embedding dilakukan di background."""
+    """Upload dokumen rujukan (PDF/DOCX/TXT). Butuh Bearer JWT admin."""
     ext = os.path.splitext(file.filename)[1].lower().strip(".")
     if ext not in v2_settings.ALLOWED_EXTENSIONS:
         raise HTTPException(status_code=400, detail=f"Format tidak didukung: .{ext}")
 
-    # Cek ukuran
     content = await file.read()
     if len(content) > v2_settings.MAX_UPLOAD_SIZE_MB * 1024 * 1024:
         raise HTTPException(status_code=413, detail=f"File terlalu besar (max {v2_settings.MAX_UPLOAD_SIZE_MB}MB)")
 
-    # Simpan file
     os.makedirs(v2_settings.UPLOAD_DIR, exist_ok=True)
     safe_filename = f"{uuid.uuid4().hex}_{file.filename}"
     filepath = os.path.join(v2_settings.UPLOAD_DIR, safe_filename)
     with open(filepath, "wb") as f:
         f.write(content)
 
-    # Simpan metadata ke DB
     doc = KemhanDocument(
         judul=judul,
         filename=file.filename,
@@ -116,7 +111,6 @@ async def upload_document(
     db.commit()
     db.refresh(doc)
 
-    # Proses di background
     background_tasks.add_task(_process_and_embed, doc.id, filepath, v2_settings.DATABASE_URL)
 
     return doc
@@ -124,21 +118,20 @@ async def upload_document(
 
 @router.get("", response_model=List[DocumentResponse], dependencies=[Depends(require_admin)])
 async def list_documents(db: Session = Depends(get_db)):
-    """List semua dokumen yang sudah diupload"""
+    """List semua dokumen. Butuh Bearer JWT admin."""
     return db.query(KemhanDocument).order_by(KemhanDocument.uploaded_at.desc()).all()
 
 
 @router.delete("/{doc_id}", dependencies=[Depends(require_admin)])
 async def delete_document(doc_id: int, db: Session = Depends(get_db)):
-    """Hapus dokumen beserta semua chunk dan embedding-nya"""
+    """Hapus dokumen. Butuh Bearer JWT admin."""
     doc = db.query(KemhanDocument).filter(KemhanDocument.id == doc_id).first()
     if not doc:
         raise HTTPException(status_code=404, detail="Dokumen tidak ditemukan")
 
-    # Hapus file fisik
     if os.path.exists(doc.filepath):
         os.remove(doc.filepath)
 
-    db.delete(doc)  # cascade akan hapus chunks + embeddings
+    db.delete(doc)
     db.commit()
     return {"message": f"Dokumen '{doc.judul}' berhasil dihapus"}
