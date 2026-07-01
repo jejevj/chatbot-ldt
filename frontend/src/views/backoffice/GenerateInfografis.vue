@@ -12,9 +12,9 @@
           </h3>
         </div>
         <p class="text-bo-400 text-xs mb-4">
-          Pilih satu dokumen rujukan. AI akan membaca isi dokumen lalu menyimpulkan
-          poin-poin penting yang cocok dijadikan infografis, kemudian menghasilkan
-          kode SVG yang siap ditampilkan.
+          Pilih satu dokumen rujukan. AI akan membaca isi dokumen lalu mencari data numerik
+          (anggaran, jumlah, persentase, dll) dan menghasilkan chart (pie, bar) dalam format SVG.
+          Jika dokumen tidak memiliki data numerik, AI akan memberitahu.
         </p>
 
         <!-- Loading dokumen -->
@@ -43,25 +43,26 @@
             class="bo-btn-primary px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Loader2 v-if="loadingGenerate" :size="14" class="animate-spin" />
-            <ImageIcon v-else :size="14" />
-            {{ loadingGenerate ? 'Menggenerate...' : 'Generate Infografis' }}
+            <BarChart2 v-else :size="14" />
+            {{ loadingGenerate ? 'Menganalisis...' : 'Generate Infografis' }}
           </button>
         </div>
 
         <!-- Status pesan -->
         <div v-if="statusMsg" class="mt-3 flex items-center gap-1.5 text-xs"
-          :class="statusMsg.type === 'ok' ? 'text-emerald-400' : 'text-red-400'">
+          :class="statusMsg.type === 'ok' ? 'text-emerald-400' : statusMsg.type === 'warn' ? 'text-amber-400' : 'text-red-400'">
           <CheckCircle2 v-if="statusMsg.type === 'ok'" :size="12" />
+          <Info v-else-if="statusMsg.type === 'warn'" :size="12" />
           <AlertCircle v-else :size="12" />
           {{ statusMsg.text }}
         </div>
       </div>
 
-      <!-- Preview SVG -->
+      <!-- Preview SVG / No Data -->
       <div class="bo-glass-card p-5 min-h-64 flex flex-col gap-3">
         <div class="flex items-center justify-between">
           <h4 class="text-bo-100 text-sm font-semibold flex items-center gap-2">
-            <LayoutPanelTop :size="14" /> Pratinjau Infografis
+            <BarChart2 :size="14" /> Hasil Visualisasi
           </h4>
           <div v-if="svgCode" class="flex gap-2">
             <button
@@ -79,18 +80,34 @@
           </div>
         </div>
 
+        <!-- Loading -->
         <div v-if="loadingGenerate" class="flex-1 flex flex-col items-center justify-center text-bo-400 text-sm py-10">
           <Loader2 :size="28" class="animate-spin mb-3" />
-          <p>AI sedang membaca dokumen dan menyusun infografis...</p>
-          <p class="text-xs text-bo-500 mt-1">Proses ini memerlukan sekitar 10–30 detik</p>
+          <p class="font-medium">AI sedang membaca dan menganalisis dokumen...</p>
+          <p class="text-xs text-bo-500 mt-1">Langkah 1: ekstrak data numerik &rarr; Langkah 2: buat chart SVG</p>
+          <p class="text-xs text-bo-500 mt-0.5">Proses memerlukan sekitar 15–45 detik</p>
         </div>
 
+        <!-- Tidak ada data numerik -->
+        <div v-else-if="noData" class="flex-1 flex flex-col items-center justify-center py-10 text-center">
+          <div class="w-12 h-12 rounded-full bg-amber-500/15 flex items-center justify-center mb-3">
+            <Info :size="22" class="text-amber-400" />
+          </div>
+          <p class="text-bo-200 font-medium text-sm">Tidak Ada Data Numerik</p>
+          <p class="text-bo-400 text-xs mt-1 max-w-sm leading-relaxed">{{ noDataMsg }}</p>
+          <p class="text-bo-500 text-xs mt-3">
+            Coba pilih dokumen yang berisi anggaran, statistik, jumlah personel, atau data persentase.
+          </p>
+        </div>
+
+        <!-- Belum generate -->
         <div v-else-if="!svgCode" class="flex-1 flex flex-col items-center justify-center text-bo-400 text-sm text-center py-10">
-          <LayoutPanelTop :size="36" class="mb-3 opacity-30" />
-          <p>Belum ada infografis yang dihasilkan.</p>
+          <BarChart2 :size="36" class="mb-3 opacity-30" />
+          <p>Belum ada visualisasi yang dihasilkan.</p>
           <p class="text-xs mt-1 text-bo-500">Pilih dokumen lalu klik "Generate Infografis".</p>
         </div>
 
+        <!-- Render SVG -->
         <div v-else class="mt-2 bg-black/20 rounded-xl p-4 border border-white/10 overflow-auto">
           <div class="w-full flex items-start justify-center" v-html="svgCode" />
         </div>
@@ -103,8 +120,8 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import {
-  Sparkles, Loader2, ImageIcon, CheckCircle2, AlertCircle,
-  LayoutPanelTop, Copy, Download
+  Sparkles, Loader2, BarChart2, CheckCircle2, AlertCircle,
+  Info, Copy, Download
 } from 'lucide-vue-next'
 import BackofficeLayout from '../../components/backoffice/BackofficeLayout.vue'
 import { docApi } from '../../services/backofficeApi'
@@ -117,6 +134,8 @@ const selectedJudul   = ref('')
 const loadingDocs     = ref(false)
 const loadingGenerate = ref(false)
 const statusMsg       = ref(null)
+const noData          = ref(false)
+const noDataMsg       = ref('')
 
 onMounted(fetchDocs)
 
@@ -128,10 +147,9 @@ async function fetchDocs() {
     const arr = Array.isArray(all) ? all : (all?.items ?? [])
     docs.value = arr.filter(d => d.status === 'ready')
     if (docs.value.length === 0) {
-      statusMsg.value = { type: 'err', text: 'Belum ada dokumen yang siap. Upload dan proses dokumen terlebih dahulu.' }
+      statusMsg.value = { type: 'warn', text: 'Belum ada dokumen yang siap. Upload dan proses dokumen terlebih dahulu.' }
     }
   } catch (e) {
-    console.error('[infografis] gagal load docs:', e)
     statusMsg.value = { type: 'err', text: `Gagal memuat daftar dokumen: ${e.message}` }
   } finally {
     loadingDocs.value = false
@@ -141,16 +159,25 @@ async function fetchDocs() {
 async function handleGenerate() {
   if (!selectedId.value) return
   statusMsg.value       = null
+  noData.value          = false
+  noDataMsg.value       = ''
   loadingGenerate.value = true
   svgCode.value         = ''
   selectedJudul.value   = docs.value.find(d => d.id === selectedId.value)?.judul ?? 'dokumen'
   try {
     const res = await infografisApi.generate(selectedId.value)
+
+    if (!res.has_data) {
+      // Dokumen tidak punya data numerik
+      noData.value    = true
+      noDataMsg.value = res.message
+      statusMsg.value = { type: 'warn', text: 'Tidak ditemukan data numerik yang bisa divisualisasikan.' }
+      return
+    }
+
     svgCode.value = res.svg || ''
-    if (!svgCode.value) throw new Error('AI tidak menghasilkan SVG yang valid')
-    statusMsg.value = { type: 'ok', text: `Infografis berhasil dibuat dari "${res.judul_dokumen}"` }
+    statusMsg.value = { type: 'ok', text: res.message || `Chart berhasil dibuat dari "${res.judul_dokumen}"` }
   } catch (e) {
-    console.error('[infografis] generate error:', e)
     statusMsg.value = { type: 'err', text: e.message || 'Gagal generate infografis' }
   } finally {
     loadingGenerate.value = false
@@ -171,7 +198,7 @@ function downloadSvg() {
   const url  = URL.createObjectURL(blob)
   const a    = document.createElement('a')
   a.href     = url
-  a.download = `infografis-${selectedJudul.value.replace(/\s+/g, '-').toLowerCase()}.svg`
+  a.download = `chart-${selectedJudul.value.replace(/\s+/g, '-').toLowerCase()}.svg`
   a.click()
   URL.revokeObjectURL(url)
 }
