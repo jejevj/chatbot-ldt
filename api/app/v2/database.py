@@ -33,6 +33,7 @@ class KemhanDocument(Base):
     updated_at = Column(TIMESTAMP, server_default=func.now(), onupdate=func.now())
 
     chunks = relationship("KemhanDocChunk", back_populates="document", cascade="all, delete-orphan")
+    faqs   = relationship("KemhanFAQ", back_populates="document", cascade="all, delete-orphan")
 
 
 class KemhanDocChunk(Base):
@@ -52,17 +53,20 @@ class KemhanDocChunk(Base):
 
 
 class KemhanFAQ(Base):
-    """FAQ yang dikelola admin"""
+    """FAQ yang di-generate AI per dokumen rujukan"""
     __tablename__ = "t_kemhan_faq"
     __table_args__ = {"extend_existing": True}
 
-    id = Column(Integer, primary_key=True, index=True)
-    pertanyaan = Column(Text, nullable=False)
-    jawaban = Column(Text, nullable=False)
-    kategori = Column(String(100), default="umum")
-    is_active = Column(Boolean, default=True)
-    created_at = Column(TIMESTAMP, server_default=func.now())
-    updated_at = Column(TIMESTAMP, server_default=func.now(), onupdate=func.now())
+    id          = Column(Integer, primary_key=True, index=True)
+    document_id = Column(Integer, ForeignKey("t_kemhan_documents.id", ondelete="CASCADE"), nullable=True, index=True)
+    pertanyaan  = Column(Text, nullable=False)
+    jawaban     = Column(Text, nullable=False)
+    kategori    = Column(String(100), default="umum")
+    is_active   = Column(Boolean, default=True)
+    created_at  = Column(TIMESTAMP, server_default=func.now())
+    updated_at  = Column(TIMESTAMP, server_default=func.now(), onupdate=func.now())
+
+    document = relationship("KemhanDocument", back_populates="faqs")
 
 
 class KemhanFeedback(Base):
