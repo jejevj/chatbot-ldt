@@ -7,7 +7,6 @@ from typing import Callable
 
 from fastapi import Depends, FastAPI, HTTPException, status
 from fastapi.openapi.docs import get_redoc_html, get_swagger_ui_html
-from fastapi.openapi.utils import get_openapi
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from fastapi.responses import JSONResponse
 
@@ -58,10 +57,12 @@ def _build_dependency() -> Callable[..., str]:
 
 def _get_v2_openapi_schema(app: FastAPI) -> dict:
     """
-    Generate OpenAPI schema yang HANYA berisi route dengan prefix /v2/.
-    Filter dilakukan pada routes yang terdaftar di app.
+    Generate OpenAPI schema yang HANYA berisi route /v2/...
+    Inject 'servers' agar Swagger UI menggunakan base URL yang benar
+    termasuk prefix /chatbot-api dari root_path.
     """
     full_schema = app.openapi()
+    root = app.root_path or ""  # e.g. "/chatbot-api"
 
     # Filter paths: hanya yang berawalan /v2/
     v2_paths = {
@@ -77,7 +78,6 @@ def _get_v2_openapi_schema(app: FastAPI) -> dict:
             for tag in method_data.get("tags", []):
                 used_tags.add(tag)
 
-    # Filter tags
     v2_tags = [
         t for t in full_schema.get("tags", [])
         if t.get("name") in used_tags
@@ -85,6 +85,14 @@ def _get_v2_openapi_schema(app: FastAPI) -> dict:
 
     v2_schema = {
         **full_schema,
+        # Inject servers dengan root_path agar Swagger UI generate URL lengkap
+        # e.g. https://apps.syscloud.my.id/chatbot-api + /v2/health
+        "servers": [
+            {
+                "url": root,  # "/chatbot-api"
+                "description": "Kemhan Chatbot API v2 (via HAProxy)",
+            }
+        ],
         "info": {
             **full_schema.get("info", {}),
             "title": "Kemhan Chatbot API v2",
@@ -92,11 +100,11 @@ def _get_v2_openapi_schema(app: FastAPI) -> dict:
                 "## Kemhan Chatbot API v2\n\n"
                 "API chatbot berbasis RAG untuk Kementerian Pertahanan RI.\n\n"
                 "### Fitur\n"
-                "* **Chat** — tanya jawab seputar Kemhan berbasis dokumen\n"
-                "* **FAQ** — pertanyaan umum yang dikelola admin\n"
-                "* **Admin: Dokumen** — upload PDF/DOCX/TXT sebagai referensi AI\n"
-                "* **Admin: FAQ** — CRUD FAQ\n"
-                "* **Admin: Feedback** — koreksi jawaban AI & training ground truth\n\n"
+                "* **Chat** \u2014 tanya jawab seputar Kemhan berbasis dokumen\n"
+                "* **FAQ** \u2014 pertanyaan umum yang dikelola admin\n"
+                "* **Admin: Dokumen** \u2014 upload PDF/DOCX/TXT sebagai referensi AI\n"
+                "* **Admin: FAQ** \u2014 CRUD FAQ\n"
+                "* **Admin: Feedback** \u2014 koreksi jawaban AI & training ground truth\n\n"
                 "### Admin Auth\n"
                 "Endpoint `/v2/admin/*` membutuhkan header: `X-Admin-Key: <secret>`"
             ),
