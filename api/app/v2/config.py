@@ -20,7 +20,7 @@ class V2Settings(BaseSettings):
     V2_EMBEDDING_THRESHOLD: float = 1.2
 
     # OCR Server (EasyOCR GPU via SSH tunnel)
-    OCR_SERVER_URL: str = "http://localhost:9003"
+    OCR_SERVER_URL: str = "http://host.docker.internal:9003"
     OCR_ENABLED: bool = True
     OCR_MIN_TEXT_LEN: int = 50   # halaman dengan teks < 50 karakter dianggap perlu OCR
     OCR_TIMEOUT: int = 300       # timeout 5 menit untuk PDF besar
