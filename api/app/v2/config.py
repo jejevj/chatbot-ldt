@@ -2,7 +2,6 @@
 V2 Configuration — inherits base settings, adds v2-specific settings
 """
 from app.config import Settings as BaseSettings
-from typing import Optional
 
 
 class V2Settings(BaseSettings):
@@ -11,14 +10,20 @@ class V2Settings(BaseSettings):
 
     # Upload
     UPLOAD_DIR: str = "uploads/kemhan"
-    MAX_UPLOAD_SIZE_MB: int = 20
+    MAX_UPLOAD_SIZE_MB: int = 50
     ALLOWED_EXTENSIONS: list = ["pdf", "docx", "txt"]
 
-    # RAG v2
+    # RAG v2 — chunk lebih kecil agar retrieval lebih presisi per pasal
     V2_SEARCH_LIMIT: int = 5
-    V2_CHUNK_SIZE: int = 512
-    V2_CHUNK_OVERLAP: int = 64
+    V2_CHUNK_SIZE: int = 256
+    V2_CHUNK_OVERLAP: int = 48
     V2_EMBEDDING_THRESHOLD: float = 1.2
+
+    # OCR Server (EasyOCR GPU via SSH tunnel)
+    OCR_SERVER_URL: str = "http://localhost:9003"
+    OCR_ENABLED: bool = True
+    OCR_MIN_TEXT_LEN: int = 50   # halaman dengan teks < 50 karakter dianggap perlu OCR
+    OCR_TIMEOUT: int = 300       # timeout 5 menit untuk PDF besar
 
     # Assistant identity
     V2_ASSISTANT_NAME: str = "Asisten Informasi Kemhan"

@@ -21,7 +21,7 @@ router = APIRouter(prefix="/admin/documents", tags=["admin-documents"])
 
 
 def _process_and_embed(doc_id: int, filepath: str, db_url: str):
-    """Background task: parse dokumen, chunking, generate embedding, simpan ke DB"""
+    """Background task: parse dokumen (+ OCR), chunking, embedding, simpan ke DB."""
     from sqlalchemy import create_engine
     from sqlalchemy.orm import sessionmaker
     from app.v2.database import KemhanDocument, KemhanDocChunk, KemhanEmbedding
@@ -34,10 +34,17 @@ def _process_and_embed(doc_id: int, filepath: str, db_url: str):
         if not doc:
             return
 
+        logger.info(f"Memproses dokumen {doc_id}: {filepath}")
+        logger.info(f"OCR enabled={v2_settings.OCR_ENABLED}, url={v2_settings.OCR_SERVER_URL}")
+
         _, chunks = process_document(
             filepath,
             chunk_size=v2_settings.V2_CHUNK_SIZE,
             overlap=v2_settings.V2_CHUNK_OVERLAP,
+            ocr_url=v2_settings.OCR_SERVER_URL,
+            ocr_enabled=v2_settings.OCR_ENABLED,
+            min_text_len=v2_settings.OCR_MIN_TEXT_LEN,
+            ocr_timeout=v2_settings.OCR_TIMEOUT,
         )
 
         chunk_objs = []
@@ -65,9 +72,10 @@ def _process_and_embed(doc_id: int, filepath: str, db_url: str):
         doc.status = "ready"
         doc.total_chunks = len(chunks)
         db.commit()
-        logger.info(f"Document {doc_id} processed: {len(chunks)} chunks")
+        logger.info(f"Dokumen {doc_id} selesai: {len(chunks)} chunks")
+
     except Exception as e:
-        logger.error(f"Error processing document {doc_id}: {e}")
+        logger.error(f"Error memproses dokumen {doc_id}: {e}")
         doc = db.query(KemhanDocument).filter(KemhanDocument.id == doc_id).first()
         if doc:
             doc.status = "error"
