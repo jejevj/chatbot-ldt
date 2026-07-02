@@ -5,11 +5,11 @@ import { config } from '../config'
 
 const BASE = config.apiBaseUrl  // contoh: https://apps.syscloud.my.id/chatbot-api
 
-export async function loginAdmin(username_user, password_user) {
+export async function loginAdmin(username, password) {
   const res = await fetch(`${BASE}/v2/admin/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ username_user, password_user }),
+    body: JSON.stringify({ username, password }),
   })
 
   const data = await res.json()
