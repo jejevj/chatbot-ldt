@@ -32,7 +32,7 @@ services:
     environment:
       DATABASE_URL: ${DATABASE_URL:-postgresql://postgres:qwert12345!@postgres:5432/satu_data_db}
       QWEN_API_URL: ${QWEN_API_URL:-http://host.docker.internal:9002/v1/chat/completions}
-      QWEN_MODEL: Qwen/Qwen2.5-Coder-14B-Instruct-AWQ
+      QWEN_MODEL: huggingface.co/quantfactory/qwen2.5-7b-instruct-uncensored-gguf:Q4_K_M
       API_HOST: 0.0.0.0
       API_PORT: 8765
       CORS_ORIGINS: '["*"]'
