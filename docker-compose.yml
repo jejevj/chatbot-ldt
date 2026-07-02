@@ -55,6 +55,7 @@ services:
     volumes:
       - ./api/logs:/app/logs
       - ./api/uploads:/app/uploads
+      - huggingface_cache:/root/.cache/huggingface
     networks:
       - chatbot-network
     restart: unless-stopped
@@ -78,6 +79,8 @@ services:
 
 volumes:
   postgres_data:
+    driver: local
+  huggingface_cache:
     driver: local
 
 networks:
