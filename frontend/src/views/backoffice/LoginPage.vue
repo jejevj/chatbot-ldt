@@ -96,7 +96,7 @@ async function handleLogin() {
   try {
     const data = await loginAdmin(form.username, form.password)
     authStore.login(data.token, data.user)
-    router.push({ name: 'BackofficeAIManagement' })
+    router.push({ name: 'DokumenRujukan' })
   } catch (err) {
     errorMsg.value = err.message || 'Terjadi kesalahan, coba lagi'
   } finally {
